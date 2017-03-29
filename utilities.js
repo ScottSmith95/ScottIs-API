@@ -8,7 +8,7 @@ var dataIntegrity = function(file_name) {
 }
 
 var testExists = function(file_name) {
-	fs.open(file_name, 'r', (err, fd) => {
+	fs.open(file_name, 'r', (err, data) => {
 		if (err) {
 			if (err.code === 'ENOENT') {
 				console.log('Data file does not exist.');
@@ -22,7 +22,7 @@ var testExists = function(file_name) {
 }
 
 var testValidJSON = function(file_name) {
-	fs.readFile(file_name, 'utf8', function readFileCallback(err, data) {
+	fs.readFile(file_name, 'utf8', (err, data) => {
 		if (isJSON(data)) {
 			return
 		}

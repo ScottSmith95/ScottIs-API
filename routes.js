@@ -31,9 +31,6 @@ router.route('/responses')
 			input = utils.sanitiseInput(input);
 			var timestamp = utils.getTimestamp();
 			
-			// console.log(isNonemptyResponse(input));
-			// console.log(isUniqueResponse(input, data));
-			
 			data = JSON.parse(data);
 			
 			if (utils.isNonemptyResponse(input) && utils.isUniqueResponse(input, data)) {

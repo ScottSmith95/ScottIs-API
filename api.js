@@ -47,6 +47,7 @@ var isUniqueResponse = function(input, data) {
 }
 
 var sanitiseInput = function(input) {
+	input = String(input)
 	input = input.trim();
 	input = input.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,''); // Remove puncuation
 	input = input.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags

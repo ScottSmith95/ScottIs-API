@@ -88,7 +88,7 @@ var sanitiseInput = function(input) {
 
 var postSlackWebhook = function(response, timestamp) {
 	var hook_url = 'https://hooks.slack.com/services/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'
-	var delete_url = config.baseURL + `api/v${config.api_version}/delete_response/` + timestamp
+	var delete_url = config.baseURL + `v${config.api_version}/delete_response/` + timestamp
 	var payload = {
 		'attachments': [{
 			'fallback': response,

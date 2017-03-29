@@ -7,7 +7,7 @@ const bodyParser  = require('body-parser');
 const fs		  = require('fs');
 const request     = require('request');
 
-const baseURL     = process.env.BASE_URL || 'https://api.scottsmith.is/';
+// const baseURL     = process.env.BASE_URL || 'https://api.scottsmith.is/';
 const port        = process.env.PORT || 8080;
 const api_version = 1.1;
 const data_file	  = process.env.DATA_FILE || 'data.json';
@@ -18,6 +18,32 @@ app.use(bodyParser.json());
 
 // HELPER FUNCTIONS
 // =============================================================================
+
+var testExists = function(data_file) {
+	fs.open(data_file, 'r', (err, fd) => {
+		if (err) {
+			if (err.code === 'ENOENT') {
+				console.log('Data file does not exist.');
+				createDataFile(data_file)
+				return;
+			}
+		
+			throw err;
+		}
+
+		return
+	});
+}
+
+var createDataFile = function(name) {
+	if (! fs.existsSync(name)) {
+		var obj = {}
+		var json = JSON.stringify(obj);
+		fs.writeFile(data_file, json, 'utf8');
+		console.log('Data file regenerated.');
+	}
+}
+
 var getTimestamp = function() {
 	return Date.now();
 }
@@ -47,7 +73,6 @@ var isUniqueResponse = function(input, data) {
 }
 
 var sanitiseInput = function(input) {
-	input = String(input)
 	input = input.trim();
 	input = input.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,''); // Remove puncuation
 	input = input.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
@@ -57,7 +82,7 @@ var sanitiseInput = function(input) {
 
 var postSlackWebhook = function(response, timestamp) {
 	var hook_url = 'https://hooks.slack.com/services/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'
-	var delete_url = baseURL + `v${api_version}/delete_response/` + timestamp
+	var delete_url = 'https://scottsmith.is/' + `api/v${api_version}/delete_response/` + timestamp
 	var payload = {
 		'attachments': [{
 			'fallback': response,
@@ -84,16 +109,7 @@ var postSlackWebhook = function(response, timestamp) {
 var router = express.Router();
 
 router.use(function(req, res, next) {
-	function testExists() {
-		if (! fs.existsSync(data_file)) {
-			var obj = {}
-			var json = JSON.stringify(obj);
-			fs.writeFile(data_file, json, 'utf8');
-			console.log('Data file regenerated.');
-		}
-	}
-
-	testExists();
+	testExists(data_file);
 	next();
 });
 
@@ -111,6 +127,7 @@ router.route('/responses')
 	.post(function(req, res) {
 		
 		fs.readFile(data_file, 'utf8', function readFileCallback(err, data){
+			
 			var input = req.body.response;
 			input = sanitiseInput(input);
 			var timestamp = getTimestamp();

@@ -1,3 +1,20 @@
+// BASE SETUP
+// =============================================================================
+
+const express	  = require('express');
+const app		  = express();
+const bodyParser  = require('body-parser');
+const fs		  = require('fs');
+const request     = require('request');
+const api_version = 1.1;
+const data_file	  = 'data.json';
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+var port = process.env.PORT || 8081;
+
+
 // HELPER FUNCTIONS
 // =============================================================================
 var getTimestamp = function() {
@@ -36,21 +53,48 @@ var sanitiseInput = function(input) {
 	return input
 }
 
+var postSlackWebhook = function(response, timestamp) {
+	var hook_url = 'https://hooks.slack.com/services/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'
+	var delete_url = 'https://scottsmith.is/' + `api/v${api_version}/delete_response/` + timestamp
+	var payload = {
+		'attachments': [{
+			'fallback': response,
+			'title': response,
+			'text': `<${delete_url}|Delete>`,
+			'color': '#167EDA'
+		}]}
 
-// BASE SETUP
-// =============================================================================
+/*
+	request({
+	method: 'POST',
+	uri: hook_url,
+	multipart: [{
+		'content-type': 'application/json',
+		body: JSON.stringify(payload)
+    }]},
+	function (error, response, body) {
+		if (error) {
+			return console.error('upload failed:', error);
+		}
+		console.log('Upload successful!  Server responded with:', body);
+	}
+	);
+*/
+	console.log(payload);
+	
+	request({
+	    url: hook_url,
+	    method: 'POST',
+	    json: payload,
+    },
+    function (error, response, body) {
+	    if (error) {
+			return console.error('Upload failed:', error);
+		}
+		console.log('Upload successful!  Server responded with:', body);
+    });
+}
 
-const express	  = require('express');
-const app		  = express();
-const bodyParser  = require('body-parser');
-const fs		  = require('fs');
-const api_version = 1.1;
-const data_file	  = 'data.json';
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-var port = process.env.PORT || 8081;
 
 // ROUTES FOR OUR API
 // =============================================================================
@@ -102,6 +146,8 @@ router.route('/responses')
 					response = {'status': 'Success. Response recorded.'};
 					response.response = input;
 					res.status(202).json(response);
+					
+					postSlackWebhook(input, timestamp);
 				}
 				catch(err){
 					res.send(err);

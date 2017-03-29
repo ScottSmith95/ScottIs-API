@@ -7,7 +7,7 @@ const bodyParser  = require('body-parser');
 const fs		  = require('fs');
 const request     = require('request');
 
-// const baseURL     = process.env.BASE_URL || 'https://api.scottsmith.is/';
+const baseURL     = process.env.BASE_URL || 'https://api.scottsmith.is/';
 const port        = process.env.PORT || 8080;
 const api_version = 1.1;
 const data_file	  = process.env.DATA_FILE || 'data.json';
@@ -57,7 +57,7 @@ var sanitiseInput = function(input) {
 
 var postSlackWebhook = function(response, timestamp) {
 	var hook_url = 'https://hooks.slack.com/services/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'
-	var delete_url = 'https://scottsmith.is/' + `api/v${api_version}/delete_response/` + timestamp
+	var delete_url = baseURL + `v${api_version}/delete_response/` + timestamp
 	var payload = {
 		'attachments': [{
 			'fallback': response,

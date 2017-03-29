@@ -6,13 +6,14 @@ const app		  = express();
 const bodyParser  = require('body-parser');
 const fs		  = require('fs');
 const request     = require('request');
+
+// const baseURL     = process.env.BASE_URL || 'https://api.scottsmith.is/';
+const port        = process.env.PORT || 8080;
 const api_version = 1.1;
-const data_file	  = 'data.json';
+const data_file	  = process.env.DATA_FILE || 'data.json';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-var port = process.env.PORT || 8081;
 
 
 // HELPER FUNCTIONS
@@ -165,7 +166,7 @@ router.route('/delete_response/:timestamp')
 
 
 // REGISTER ROUTES -------------------------------
-app.use(`/api/v${api_version}`, router);
+app.use(`/v${api_version}`, router);
 
 // START THE SERVER
 // =============================================================================

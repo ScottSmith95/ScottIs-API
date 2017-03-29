@@ -63,35 +63,16 @@ var postSlackWebhook = function(response, timestamp) {
 			'text': `<${delete_url}|Delete>`,
 			'color': '#167EDA'
 		}]}
-
-/*
-	request({
-	method: 'POST',
-	uri: hook_url,
-	multipart: [{
-		'content-type': 'application/json',
-		body: JSON.stringify(payload)
-    }]},
-	function (error, response, body) {
-		if (error) {
-			return console.error('upload failed:', error);
-		}
-		console.log('Upload successful!  Server responded with:', body);
-	}
-	);
-*/
-	console.log(payload);
 	
 	request({
+		method: 'POST',
 	    url: hook_url,
-	    method: 'POST',
-	    json: payload,
+	    json: payload
     },
     function (error, response, body) {
 	    if (error) {
 			return console.error('Upload failed:', error);
 		}
-		console.log('Upload successful!  Server responded with:', body);
     });
 }
 

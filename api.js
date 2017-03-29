@@ -38,7 +38,7 @@ var isUniqueResponse = function(input, data) {
 	input = input.toLowerCase();
 	
 	for (var timestamp in data) {
-		console.log('data.' + timestamp, '=', data[timestamp]);
+		// console.log('data.' + timestamp, '=', data[timestamp]);
 		if (data[timestamp].toLowerCase() == input) {
 			return false
 		}
@@ -114,8 +114,8 @@ router.route('/responses')
 			input = sanitiseInput(input);
 			var timestamp = getTimestamp();
 			
-			console.log(isNonemptyResponse(input));
-			console.log(isUniqueResponse(input, data));
+			// console.log(isNonemptyResponse(input));
+			// console.log(isUniqueResponse(input, data));
 			
 			data = JSON.parse(data);
 			

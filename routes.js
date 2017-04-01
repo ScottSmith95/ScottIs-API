@@ -25,25 +25,25 @@ router.route('/responses')
 	
 	.post(function(req, res) {
 		
-		fs.readFile(config.data_file, 'utf8', function readFileCallback(err, data) {
+		fs.readFile(config.data_file, 'utf8', (err, data) => {
 			
-			var input = req.body.response;
-			input = utils.sanitiseInput(input);
+			var input = utils.sanitiseInput(req.body.response);
 			var timestamp = utils.getTimestamp();
+			var origin = req.headers.origin;
+			var baseURL = utils.getBaseURL(origin);
 			
 			data = JSON.parse(data);
 			
-			if (utils.isNonemptyResponse(input) && utils.isUniqueResponse(input, data)) {
+			if (utils.isNonemptyResponse(input) && utils.isUniqueResponse(input, data) && utils.domainCheck(origin)) {
 				try {
-					data[timestamp] = input;
-					json = JSON.stringify(data);
-					fs.writeFile(config.data_file, json, 'utf8');
+					utils.writeToDataFile(data, input, timestamp);
+					utils.postSlackWebhook(input, timestamp);
 					
 					response = {'status': 'Success. Response recorded.'};
 					response.response = input;
-					res.status(202).json(response);
-					
-					utils.postSlackWebhook(input, timestamp);
+					res.status(202);
+					res.append('Access-Control-Allow-Origin', baseURL)
+					res.json(response);
 				}
 				catch(err){
 					console.log(err);
@@ -62,13 +62,11 @@ router.route('/delete_response/:timestamp')
 	.all(function(req, res, next) {
 		var timestamp = req.params.timestamp;
 		
-		fs.readFile(config.data_file, 'utf8', function readFileCallback(err, data) {
+		fs.readFile(config.data_file, 'utf8', (err, data) => {
 			data = JSON.parse(data);
 			
 			try {
-				delete data[timestamp];
-				json = JSON.stringify(data);
-				fs.writeFile(config.data_file, json, 'utf8');
+				deleteFromDataFile(data, timestamp);
 				
 				response = {'status': 'Success. Response deleted.'};
 				res.status(200).json(response);

@@ -1,6 +1,7 @@
 const config  = require('./config');
-const fs      = require('fs');
 const request = require('request');
+const fs      = require('fs');
+const url     = require('url');
 
 var dataIntegrity = function(file_name) {
 	testExists(file_name);
@@ -37,7 +38,8 @@ var testValidJSON = function(file_name) {
 function isJSON(str) {
     try {
         JSON.parse(str);
-    } catch (e) {
+    }
+    catch (err) {
         return false;
     }
     return true;
@@ -48,6 +50,18 @@ var createDataFile = function(file_name) {
 	var json = JSON.stringify(obj);
 	fs.writeFile(file_name, json, 'utf8');
 	console.log('Data file regenerated.');
+}
+
+var writeToDataFile = function(data, input, timestamp) {
+	data[timestamp] = input;
+	json = JSON.stringify(data, null, 2);
+	fs.writeFile(config.data_file, json, 'utf8');
+}
+
+var deleteFromDataFile = function(data, timestamp) {
+	delete data[timestamp];
+	json = JSON.stringify(data, null, 2);
+	fs.writeFile(config.data_file, json, 'utf8');
 }
 
 var getTimestamp = function() {
@@ -86,6 +100,38 @@ var sanitiseInput = function(input) {
 	return input
 }
 
+var domainCheck = function(origin) {
+	
+	var root_domain = getRootDomain(origin);
+	
+	if (root_domain == 'scottsmith.is') {
+		return true
+	}
+	else {
+		return false
+	}
+}
+
+var getBaseURL = function(origin) {
+	origin_parsed = url.parse(origin, true, true);
+	var hostname = origin_parsed.hostname;
+	var protocol = origin_parsed.protocol
+	var baseURL  = protocol + '//' + hostname
+	
+	return baseURL
+}
+
+var getRootDomain = function(origin) {
+	origin_parsed = url.parse(origin, true, true);
+	var hostname = origin_parsed.hostname;
+	
+	var full_domain = hostname.split('.');
+	full_domain.shift();
+	var root_domain = full_domain.join('.');
+	
+	return root_domain
+}
+
 var postSlackWebhook = function(response, timestamp) {
 	var hook_url = 'https://hooks.slack.com/services/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'
 	var delete_url = config.baseURL + `v${config.api_version}/delete_response/` + timestamp
@@ -111,9 +157,13 @@ var postSlackWebhook = function(response, timestamp) {
 
 module.exports = {
 	dataIntegrity: dataIntegrity,
+	writeToDataFile: writeToDataFile,
+	deleteFromDataFile: deleteFromDataFile,
 	getTimestamp: getTimestamp,
 	isNonemptyResponse: isNonemptyResponse,
 	isUniqueResponse: isUniqueResponse,
 	sanitiseInput: sanitiseInput,
+	domainCheck: domainCheck,
+	getBaseURL: getBaseURL,
 	postSlackWebhook: postSlackWebhook
 }

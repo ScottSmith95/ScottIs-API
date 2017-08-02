@@ -7,6 +7,7 @@ module.exports = {
     {
       name   : 'ScottSmith.is API',
       script : 'api.js',
+      cwd    : '/var/www/scottsmith.is/api/',
       watch  : true,
       ignore_watch: ["data.json", "node_modules"],
       env : {

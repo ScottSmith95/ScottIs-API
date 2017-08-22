@@ -86,9 +86,11 @@ var isUniqueResponse = function(input, data) {
 	for (var timestamp in data) {
 		// console.log('data.' + timestamp, '=', data[timestamp]);
 		if (data[timestamp].toLowerCase() == input) {
+			console.log('dup');
 			return false
 		}
 	}
+	
 	return true
 }
 
@@ -102,9 +104,9 @@ var sanitiseInput = function(input) {
 
 var domainCheck = function(origin) {
 	
-	var root_domain = getRootDomain(origin);
+	var hostname = getHostname(origin);
 	
-	if (root_domain == 'scottsmith.is') {
+	if (hostname.includes('scottsmith.is')) {
 		return true
 	}
 	else {
@@ -121,15 +123,9 @@ var getBaseURL = function(origin) {
 	return baseURL
 }
 
-var getRootDomain = function(origin) {
+var getHostname = function(origin) {
 	origin_parsed = url.parse(origin, true, true);
-	var hostname = origin_parsed.hostname;
-	
-	var full_domain = hostname.split('.');
-	full_domain.shift();
-	var root_domain = full_domain.join('.');
-	
-	return root_domain
+	return origin_parsed.hostname;
 }
 
 var postSlackWebhook = function(response, timestamp) {

@@ -13,9 +13,16 @@ router.use(function(req, res, next) {
 
 router.route('/responses')
 	.get(function(req, res) {
-		try {
-			const json = JSON.parse(fs.readFileSync(config.data_file));
-			res.status(200).json(json);
+		try {			
+			res.status(200)
+			
+			var json = JSON.parse(fs.readFileSync(config.data_file));
+			if (req.query.limit) {
+				responses = utils.getNewerResponses(json, req.query.limit);
+				res.json(responses);
+			} else {
+				res.json(json);
+			}
 		}
 		catch(err) {
 			console.log(err);

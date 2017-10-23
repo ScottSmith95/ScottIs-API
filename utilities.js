@@ -64,6 +64,34 @@ var deleteFromDataFile = function(data, timestamp) {
 	fs.writeFile(config.data_file, json, 'utf8');
 }
 
+var getNewerResponses = function(obj, limit) {
+	// Until Node 8, use this Object.entries() polyfill.
+	// From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries#Polyfill
+	if (!Object.entries) {
+		Object.entries = function( obj ){
+			var ownProps = Object.keys( obj );
+			var i = ownProps.length;
+			var resArray = new Array(i); // preallocate the Array
+			while (i--) {
+				resArray[i] = [ownProps[i], obj[ownProps[i]]];
+			}
+			return resArray;
+		};
+	}
+	
+	var sort_array = Object.entries(obj)
+	sort_array = sort_array.sort(function (a, b) {
+		return b[0] - a[0] // Sort in reverse chronological order.
+	});
+	sort_array = sort_array.slice(0, limit); // Get just the first (earliest) n items.
+	
+	// Adapted from: https://medium.com/dailyjs/rewriting-javascript-converting-an-array-of-objects-to-an-object-ec579cafbfc7
+	const arrayToObject = (arr, keyField) =>
+		Object.assign({}, ...arr.map(item => ({[item[0]]: item[1]})))
+	
+	return arrayToObject(sort_array)
+}
+
 var getTimestamp = function() {
 	return Date.now();
 }
@@ -155,6 +183,7 @@ module.exports = {
 	dataIntegrity: dataIntegrity,
 	writeToDataFile: writeToDataFile,
 	deleteFromDataFile: deleteFromDataFile,
+	getNewerResponses: getNewerResponses,
 	getTimestamp: getTimestamp,
 	isNonemptyResponse: isNonemptyResponse,
 	isUniqueResponse: isUniqueResponse,

@@ -30,19 +30,24 @@ router.route('/responses')
 			var input = utils.sanitiseInput(req.body.response);
 			var timestamp = utils.getTimestamp();
 			var origin = req.headers.origin;
-			var baseURL = utils.getBaseURL(origin);
+			if (origin) {
+				var baseURL = utils.getBaseURL(origin);
+			}
 			
 			data = JSON.parse(data);
 			
-			if (utils.isNonemptyResponse(input) && utils.isUniqueResponse(input, data) && utils.domainCheck(origin)) {
+			if (
+				utils.isNonemptyResponse(input) && 
+				utils.isUniqueResponse(input, data) && 
+				( origin ? utils.domainCheck(origin) : true )
+			) {
 				try {
 					utils.writeToDataFile(data, input, timestamp);
 					utils.postSlackWebhook(input, timestamp);
 					
 					response = {'status': 'Success. Response recorded.'};
 					response.response = input;
-					res.status(202);
-					res.append('Access-Control-Allow-Origin', baseURL)
+					res.status(200);
 					res.json(response);
 				}
 				catch(err){
@@ -51,9 +56,12 @@ router.route('/responses')
 				}
 			}
 			else {
+				if (baseURL) {
+					res.append('Access-Control-Allow-Origin', baseURL); // Since Nginx will not (by default) use add_headers on 202 responses.
+				}
 				response = {'status': 'Response is a duplicate or empty.'};
 				response.response = input;
-				res.status(200).json(response);
+				res.status(202).json(response);
 			}
 		});
 	});
@@ -66,12 +74,13 @@ router.route('/delete_response/:timestamp')
 			data = JSON.parse(data);
 			
 			try {
-				deleteFromDataFile(data, timestamp);
+				utils.deleteFromDataFile(data, timestamp);
 				
 				response = {'status': 'Success. Response deleted.'};
 				res.status(200).json(response);
 			}
 			catch(err){
+				console.log(err);
 				res.status(500).send(err);
 			}
 		});

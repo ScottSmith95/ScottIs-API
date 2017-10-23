@@ -14,7 +14,7 @@ apps : [
 			'PORT': 2370
 		},
 		env_development: {
-			"BASE_URL": 'http://dev.scottsmith.is'
+			"BASE_URL": 'http://dev-api.scottsmith.is'
 		}
 	}
 ]

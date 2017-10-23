@@ -1,12 +1,11 @@
 // IMPORTS
 const express	  = require('express');
 const app		  = express();
-const bodyParser  = require('body-parser');
 const config      = require('./config');
 
 // EXPRESS SETUP
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // ROUTES SETUP
 const defineRoutes = require('./routes');

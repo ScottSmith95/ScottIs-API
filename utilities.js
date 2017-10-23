@@ -86,7 +86,7 @@ var isUniqueResponse = function(input, data) {
 	for (var timestamp in data) {
 		// console.log('data.' + timestamp, '=', data[timestamp]);
 		if (data[timestamp].toLowerCase() == input) {
-			console.log('dup');
+			console.log('Duplicate response.');
 			return false
 		}
 	}

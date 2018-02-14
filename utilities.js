@@ -124,8 +124,8 @@ var isUniqueResponse = function(input, data) {
 
 var sanitiseInput = function(input) {
 	input = input.trim();
-	input = input.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,''); // Remove puncuation
-	input = input.replace(/(<([^>]+)>)/ig,''); // Remove HTML tags
+	input = input.replace(/\b[-~=+_.,;\^&\*:*&$%#!?‽\[\]{}()`"']+\B|\B[-~=+_.,;\^&\*:*&$%#!?‽\[\]{}()`"']+\b/g, ''); // Remove punctuation at beginnng or end of words
+	input = input.replace(/(<([^>]+)>)/ig, ''); // Remove HTML tags
 	
 	return input
 }

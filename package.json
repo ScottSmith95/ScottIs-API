@@ -3,6 +3,10 @@
   "version": "1.2.0",
   "description": "What do people really think about you?",
   "main": "api.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ScottSmith95/ScottIs-API.git"
+  },
   "dependencies": {
     "express": "^4.16.3",
     "request": "^2.85.0"

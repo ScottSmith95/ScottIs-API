@@ -80,10 +80,19 @@ var getNewerResponses = function(obj, limit) {
 	}
 	
 	var sort_array = Object.entries(obj)
+	
+	// Sort in reverse chronological order. (Newest -> Oldest)
 	sort_array = sort_array.sort(function (a, b) {
-		return b[0] - a[0] // Sort in reverse chronological order.
+		return b[0] - a[0]
 	});
-	sort_array = sort_array.slice(0, limit); // Get just the first (earliest) n items.
+	
+	// Get just the first (earliest) n items. (Newest[0:limit])
+	sort_array = sort_array.slice(0, limit);
+	
+	// Sort back to chronological order. (Oldest -> Newest)
+	sort_array = sort_array.sort(function (a, b) {
+		return a[0] - b[0]
+	});
 	
 	// Adapted from: https://medium.com/dailyjs/rewriting-javascript-converting-an-array-of-objects-to-an-object-ec579cafbfc7
 	const arrayToObject = (arr, keyField) =>

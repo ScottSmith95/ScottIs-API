@@ -1,115 +1,118 @@
-const config  = require('./config');
-const request = require('request');
-const fs      = require('fs');
-const url     = require('url');
+const config  = require( './config' );
+const request = require( 'request' );
+const fs      = require( 'fs' );
+const url     = require( 'url' );
 
-var dataIntegrity = function(file_name) {
-	testExists(file_name);
-	testValidJSON(file_name);
+const dataIntegrity = function( file_name ) {
+	testExists( file_name );
+	testValidJSON( file_name );
 }
 
-var testExists = function(file_name) {
-	fs.open(file_name, 'r', (err, data) => {
-		if (err) {
-			if (err.code === 'ENOENT') {
-				console.log('Data file does not exist.');
-				createDataFile(file_name);
+const testExists = function( file_name ) {
+	fs.open( file_name, 'r', ( err, data ) => {
+		if ( err ) {
+			if ( err.code === 'ENOENT' ) {
+				console.log( 'Data file does not exist.' );
+				createDataFile( file_name );
 				return
 			}
 			throw err
 		}
 		return
-	});
+	} );
 }
 
-var testValidJSON = function(file_name) {
-	fs.readFile(file_name, 'utf8', (err, data) => {
-		if (isJSON(data)) {
+const testValidJSON = function( file_name ) {
+	fs.readFile(file_name, 'utf8', ( err, data ) => {
+		if ( isJSON( data ) ) {
 			return
 		}
 		else {
-			console.log('Data invalid.');
+			console.log( 'Data invalid.' );
 			createDataFile(file_name);
 			return
 		}
-	});
+	} );
 }
 
-function isJSON(str) {
+const isJSON = function( str ) {
     try {
-        JSON.parse(str);
-    }
-    catch (err) {
+        JSON.parse( str );
+    } catch (err) {
         return false;
     }
     return true;
 }
 
-var createDataFile = function(file_name) {
+const createDataFile = function( file_name ) {
 	var obj = {}
-	var json = JSON.stringify(obj);
-	fs.writeFile(file_name, json, 'utf8');
-	console.log('Data file regenerated.');
+	var json = JSON.stringify( obj );
+	fs.writeFile( file_name, json, 'utf8' );
+	console.log( 'Data file regenerated.' );
 }
 
-var writeToDataFile = function(data, input, timestamp) {
-	data[timestamp] = input;
-	json = JSON.stringify(data, null, 2);
-	fs.writeFile(config.data_file, json, 'utf8');
+const writeToDataFile = function( data, input, timestamp ) {
+	data[ timestamp ] = input;
+	json = JSON.stringify( data, null, 2 );
+	fs.writeFile( config.data_file, json, 'utf8' );
 }
 
-var deleteFromDataFile = function(data, timestamp) {
-	delete data[timestamp];
-	json = JSON.stringify(data, null, 2);
-	fs.writeFile(config.data_file, json, 'utf8');
+const deleteFromDataFile = function( data, timestamp ) {
+	if ( data[ timestamp ] ) {
+		delete data[ timestamp ];
+		json = JSON.stringify( data, null, 2 );
+		fs.writeFile( config.data_file, json, 'utf8' );
+		return true;
+	}
+	return false;
 }
 
-var getNewerResponses = function(obj, limit) {
+const getNewerResponses = function( obj, limit ) {
 	// Until Node 8, use this Object.entries() polyfill.
 	// From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries#Polyfill
-	if (!Object.entries) {
+	if ( !Object.entries ) {
 		Object.entries = function( obj ){
-			var ownProps = Object.keys( obj );
-			var i = ownProps.length;
-			var resArray = new Array(i); // preallocate the Array
-			while (i--) {
-				resArray[i] = [ownProps[i], obj[ownProps[i]]];
+			const ownProps = Object.keys( obj );
+			let i = ownProps.length;
+			let resArray = new Array( i ); // preallocate the Array
+			while ( i-- ) {
+				resArray[ i ] = [ ownProps[ i ], obj[ ownProps[ i ] ] ];
 			}
 			return resArray;
 		};
 	}
 	
-	var sort_array = Object.entries(obj)
+	let sort_array = Object.entries( obj )
 	
 	// Sort in reverse chronological order. (Newest -> Oldest)
-	sort_array = sort_array.sort(function (a, b) {
-		return b[0] - a[0]
-	});
+	sort_array = sort_array.sort( function ( a, b ) {
+		return b[ 0 ] - a[ 0 ]
+	} );
 	
 	// Get just the first (earliest) n items. (Newest[0:limit])
-	sort_array = sort_array.slice(0, limit);
+	sort_array = sort_array.slice( 0, limit );
 	
 	// Sort back to chronological order. (Oldest -> Newest)
-	sort_array = sort_array.sort(function (a, b) {
-		return a[0] - b[0]
-	});
+	sort_array = sort_array.sort( function ( a, b ) {
+		return a[ 0 ] - b[ 0 ]
+	} );
 	
 	// Adapted from: https://medium.com/dailyjs/rewriting-javascript-converting-an-array-of-objects-to-an-object-ec579cafbfc7
-	const arrayToObject = (arr, keyField) =>
-		Object.assign({}, ...arr.map(item => ({[item[0]]: item[1]})))
+	const arrayToObject = ( arr, keyField ) =>
+		Object.assign( {}, ...arr.map( item => ( { [ item[ 0 ] ]: item[ 1 ] } ) ) )
 	
-	return arrayToObject(sort_array)
+	return arrayToObject( sort_array )
 }
 
-var getTimestamp = function() {
+const getTimestamp = function() {
 	return Date.now();
 }
 
-var isNonemptyResponse = function(input) {
-	if (typeof input == 'undefined') {
+const isNonemptyResponse = function( input ) {
+	if ( typeof input === 'undefined' ) {
 		return false;
 	}
-	if (input.length == 0) {
+	if ( input.length === 0 ) {
 		return false;
 	}
 	else {
@@ -117,75 +120,85 @@ var isNonemptyResponse = function(input) {
 	}
 }
 
-var isUniqueResponse = function(input, data) {
+const isUniqueResponse = function( input, data ) {
 	input = input.toLowerCase();
 	
-	for (var timestamp in data) {
+	for ( var timestamp in data ) {
 		// console.log('data.' + timestamp, '=', data[timestamp]);
-		if (data[timestamp].toLowerCase() == input) {
-			console.log('Duplicate response.');
-			return false
+		if ( data[ timestamp ].toLowerCase() == input ) {
+			console.log( 'Duplicate response.' );
+			return false;
 		}
 	}
 	
-	return true
+	return true;
 }
 
-var sanitiseInput = function(input) {
+const sanitiseInput = function( input ) {
 	input = input.trim();
-	input = input.replace(/\b[-~=+_.,;\^&\*:*&$%#!?‽\[\]{}()`"']+\B|\B[-~=+_.,;\^&\*:*&$%#!?‽\[\]{}()`"']+\b/g, ''); // Remove punctuation at beginnng or end of words
-	input = input.replace(/(<([^>]+)>)/ig, ''); // Remove HTML tags
+	input = input.replace( /\b[-~=+_.,;\^&\*:*&$%#!?‽\[\]{}()`"']+\B|\B[-~=+_.,;\^&\*:*&$%#!?‽\[\]{}()`"']+\b/g, '' ); // Remove punctuation at beginnng or end of words
+	input = input.replace( /(<([^>]+)>)/ig, '' ); // Remove HTML tags
 	
-	return input
+	return input;
 }
 
-var domainCheck = function(origin) {
+const notBannedIP = function( ip ) {
+	for ( const banned_ip in config.banned_ips ) {
+		if ( ip.includes(banned_ip) ) {
+			return false;
+		}
+	}
 	
-	var hostname = getHostname(origin);
+	return true;
+}
+
+const domainCheck = function( origin ) {
 	
-	if (hostname.includes('scottsmith.is')) {
-		return true
+	var hostname = getHostname( origin );
+	
+	if ( hostname.includes( 'scottsmith.is' ) ) {
+		return true;
 	}
 	else {
-		return false
+		return false;
 	}
 }
 
-var getBaseURL = function(origin) {
-	origin_parsed = url.parse(origin, true, true);
-	var hostname = origin_parsed.hostname;
-	var protocol = origin_parsed.protocol
-	var baseURL  = protocol + '//' + hostname
+const getBaseURL = function( origin ) {
+	const origin_parsed = url.parse( origin, true, true );
+	const hostname = origin_parsed.hostname;
+	const protocol = origin_parsed.protocol;
+	const baseURL  = `${ protocol }//${ hostname }`;
 	
-	return baseURL
+	return baseURL;
 }
 
-var getHostname = function(origin) {
-	origin_parsed = url.parse(origin, true, true);
+const getHostname = function( origin ) {
+	const origin_parsed = url.parse( origin, true, true );
 	return origin_parsed.hostname;
 }
 
-var postSlackWebhook = function(response, timestamp) {
-	var hook_url = 'https://hooks.slack.com/services/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'
-	var delete_url = config.baseURL + `v${config.api_version}/delete_response/` + timestamp
-	var payload = {
-		'attachments': [{
+const postSlackWebhook = function( response, timestamp, ip ) {
+	const hook_url = 'https://hooks.slack.com/services/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'
+	const delete_url = `${ config.baseURL }v${config.api_version}/delete_response/${ timestamp }`
+	const payload = {
+		'attachments': [ {
 			'fallback': response,
 			'title': response,
-			'text': `<${delete_url}|Delete>`,
+			'text': `${ip} <${delete_url}|Delete>`,
 			'color': '#167EDA'
-		}]}
+		} ] }
 	
-	request({
+	request( {
 		method: 'POST',
 	    url: hook_url,
 	    json: payload
     },
-    function (error, response, body) {
-	    if (error) {
+    function ( error, response, body ) {
+	    if ( error ) {
 			return console.error('Upload failed:', error);
 		}
-    });
+    } );
 }
 
 module.exports = {
@@ -196,6 +209,7 @@ module.exports = {
 	getTimestamp: getTimestamp,
 	isNonemptyResponse: isNonemptyResponse,
 	isUniqueResponse: isUniqueResponse,
+	notBannedIP: notBannedIP,
 	sanitiseInput: sanitiseInput,
 	domainCheck: domainCheck,
 	getBaseURL: getBaseURL,

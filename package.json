@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/ScottSmith95/ScottIs-API.git"
   },
-   "bugs": {
+  "bugs": {
     "url": "https://github.com/ScottSmith95/ScottIs-API/issues"
   },
   "scripts": {

@@ -1,7 +1,10 @@
+const semver = require( 'semver' );
+const api_semver = require( './package.json' )[ 'version' ];
+
 const config  = {};
 config.baseURL = process.env.BASE_URL || 'https://api.scottsmith.is/';
 config.port = process.env.PORT || 8080;
-config.api_version = 1.2;
+config.api_version = `${ semver.major( api_semver ) }.${ semver.minor( api_semver ) }`;
 config.data_file = process.env.DATA_FILE || 'data.json';
 config.banned = require( './bans' );
 

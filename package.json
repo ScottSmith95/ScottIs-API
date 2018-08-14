@@ -1,20 +1,23 @@
 {
-  "name": "scottsmith-is-api",
+  "name": "scottsmith.is-api",
   "version": "1.2.0",
   "description": "What do people really think about you?",
+  "author": "Scott Smith",
+  "license": "MIT",
   "main": "api.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/ScottSmith95/ScottIs-API.git"
   },
+   "bugs": {
+    "url": "https://github.com/ScottSmith95/ScottIs-API/issues"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "express": "^4.16.3",
     "request": "^2.88.0"
   },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Scott Smith",
-  "license": "ISC"
+  "devDependencies": {}
 }

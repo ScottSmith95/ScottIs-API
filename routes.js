@@ -51,7 +51,7 @@ router.route( '/responses' )
 				( utils.notBannedIP( ip ) )
 			) {
 				try {
-					console.log( 'offending ip: ' + ip + '/n' );
+					console.log( 'offending ip: ' + ip + '\n' );
 					utils.writeToDataFile( data, input, timestamp );
 					utils.postSlackWebhook( input, timestamp, ip );
 					

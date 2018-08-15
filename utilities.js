@@ -6,7 +6,7 @@ const url     = require( 'url' );
 const dataIntegrity = function( file_name ) {
 	testExists( file_name );
 	testValidJSON( file_name );
-}
+};
 
 const testExists = function( file_name ) {
 	fs.open( file_name, 'r', ( err, data ) => {
@@ -14,26 +14,25 @@ const testExists = function( file_name ) {
 			if ( err.code === 'ENOENT' ) {
 				console.log( 'Data file does not exist.' );
 				createDataFile( file_name );
-				return
+				return;
 			}
 			throw err
 		}
-		return
+		return;
 	} );
-}
+};
 
 const testValidJSON = function( file_name ) {
 	fs.readFile(file_name, 'utf8', ( err, data ) => {
 		if ( isJSON( data ) ) {
-			return
-		}
-		else {
+			return;
+		} else {
 			console.log( 'Data invalid.' );
-			createDataFile(file_name);
-			return
+			createDataFile( file_name );
+			return;
 		}
 	} );
-}
+};
 
 const isJSON = function( str ) {
     try {
@@ -42,20 +41,20 @@ const isJSON = function( str ) {
         return false;
     }
     return true;
-}
+};
 
 const createDataFile = function( file_name ) {
 	var obj = {}
 	var json = JSON.stringify( obj );
 	fs.writeFile( file_name, json, 'utf8' );
 	console.log( 'Data file regenerated.' );
-}
+};
 
 const writeToDataFile = function( data, input, timestamp ) {
 	data[ timestamp ] = input;
 	json = JSON.stringify( data, null, 2 );
 	fs.writeFile( config.data_file, json, 'utf8' );
-}
+};
 
 const deleteFromDataFile = function( data, timestamp ) {
 	if ( data[ timestamp ] ) {
@@ -65,7 +64,7 @@ const deleteFromDataFile = function( data, timestamp ) {
 		return true;
 	}
 	return false;
-}
+};
 
 const getNewerResponses = function( obj, limit ) {
 	// Until Node 8, use this Object.entries() polyfill.
@@ -101,12 +100,12 @@ const getNewerResponses = function( obj, limit ) {
 	const arrayToObject = ( arr, keyField ) =>
 		Object.assign( {}, ...arr.map( item => ( { [ item[ 0 ] ]: item[ 1 ] } ) ) )
 	
-	return arrayToObject( sort_array )
-}
+	return arrayToObject( sort_array );
+};
 
 const getTimestamp = function() {
 	return Date.now();
-}
+};
 
 const isNonemptyResponse = function( input ) {
 	if ( typeof input === 'undefined' ) {
@@ -118,7 +117,7 @@ const isNonemptyResponse = function( input ) {
 	else {
 		return true;
 	}
-}
+};
 
 const isUniqueResponse = function( input, data ) {
 	input = input.toLowerCase();
@@ -132,7 +131,7 @@ const isUniqueResponse = function( input, data ) {
 	}
 	
 	return true;
-}
+};
 
 const sanitiseInput = function( input ) {
 	input = input.trim();
@@ -140,17 +139,17 @@ const sanitiseInput = function( input ) {
 	input = input.replace( /(<([^>]+)>)/ig, '' ); // Remove HTML tags
 	
 	return input;
-}
+};
 
 const notBannedIP = function( ip ) {
 	for ( const banned_ip in config.banned_ips ) {
-		if ( ip.includes(banned_ip) ) {
+		if ( ip.includes( banned_ip ) ) {
 			return false;
 		}
 	}
 	
 	return true;
-}
+};
 
 const domainCheck = function( origin ) {
 	
@@ -158,11 +157,10 @@ const domainCheck = function( origin ) {
 	
 	if ( hostname.includes( 'scottsmith.is' ) ) {
 		return true;
-	}
-	else {
+	} else {
 		return false;
 	}
-}
+};
 
 const getBaseURL = function( origin ) {
 	const origin_parsed = url.parse( origin, true, true );
@@ -171,23 +169,26 @@ const getBaseURL = function( origin ) {
 	const baseURL  = `${ protocol }//${ hostname }`;
 	
 	return baseURL;
-}
+};
 
 const getHostname = function( origin ) {
 	const origin_parsed = url.parse( origin, true, true );
 	return origin_parsed.hostname;
-}
+};
 
 const postSlackWebhook = function( response, timestamp, ip ) {
 	const hook_url = 'https://hooks.slack.com/services/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'
 	const delete_url = `${ config.baseURL }v${config.api_version}/delete_response/${ timestamp }`
 	const payload = {
-		'attachments': [ {
-			'fallback': response,
-			'title': response,
-			'text': `${ip} <${delete_url}|Delete>`,
-			'color': '#167EDA'
-		} ] }
+		'attachments': [
+			{
+				'fallback': response,
+				'title': response,
+				'text': `<${ delete_url }|Delete>`,
+				'color': '#167EDA'
+			}
+		]
+	};
 	
 	request( {
 		method: 'POST',
@@ -196,10 +197,10 @@ const postSlackWebhook = function( response, timestamp, ip ) {
     },
     function ( error, response, body ) {
 	    if ( error ) {
-			return console.error('Upload failed:', error);
+			return console.error( 'Upload failed:', error );
 		}
     } );
-}
+};
 
 module.exports = {
 	dataIntegrity: dataIntegrity,
@@ -214,4 +215,4 @@ module.exports = {
 	domainCheck: domainCheck,
 	getBaseURL: getBaseURL,
 	postSlackWebhook: postSlackWebhook
-}
+};

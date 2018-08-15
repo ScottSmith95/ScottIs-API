@@ -8,4 +8,4 @@ config.api_version = `${ semver.major( api_semver ) }.${ semver.minor( api_semve
 config.data_file = process.env.DATA_FILE || 'data.json';
 config.banned = require( './bans' );
 
-module.exports = config
+module.exports = config;

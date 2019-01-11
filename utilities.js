@@ -181,7 +181,7 @@ const getHostname = function( origin ) {
 
 const postSlackWebhook = function( response, timestamp ) {
 	const hook_url = 'https://hooks.slack.com/services/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';
-	const delete_url = `${ config.baseURL }v${ config.api_version }/delete_response/${ timestamp }`;
+	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
 	const payload = {
 		'attachments': [
 			{

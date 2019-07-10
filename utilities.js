@@ -208,10 +208,11 @@ const postSlackWebhook = function( response, timestamp ) {
 		function ( error, response ) {
 			if ( error ) {
 				console.error( 'Upload failed:', error );
-				console.error( 'Response:', response );
-				
-				if ( response.statusCode ) {
-					console.error( 'Responded with code:', response.statusCode );
+				if ( typeof response !== 'undefined' ) {
+					console.error( 'Response:', response );
+					if ( typeof response.statusCode !== 'undefined' ) {
+						console.error( 'Responded with code:', response.statusCode );
+					}
 				}
 			}
 		}

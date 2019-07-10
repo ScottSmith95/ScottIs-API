@@ -49,21 +49,27 @@ const isJSON = function( str ) {
 const createDataFile = function( file_name ) {
 	const obj = {};
 	const json = JSON.stringify( obj );
-	fs.writeFile( file_name, json, 'utf8' );
+	fs.writeFile( file_name, json, 'utf8', error => {
+		if ( error ) throw error;
+	} );
 	console.log( 'Data file regenerated.' );
 };
 
 const writeToDataFile = function( data, input, timestamp ) {
 	data[ timestamp ] = input;
 	const json = JSON.stringify( data, null, 2 );
-	fs.writeFile( config.data_file, json, 'utf8' );
+	fs.writeFile( config.data_file, json, 'utf8', error => {
+		if ( error ) throw error;
+	} );
 };
 
 const deleteFromDataFile = function( data, timestamp ) {
 	if ( data[ timestamp ] ) {
 		delete data[ timestamp ];
 		const json = JSON.stringify( data, null, 2 );
-		fs.writeFile( config.data_file, json, 'utf8' );
+		fs.writeFile( config.data_file, json, 'utf8', error => {
+			if ( error ) throw error;
+		} );
 		return true;
 	}
 	return false;

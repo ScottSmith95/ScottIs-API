@@ -1,4 +1,4 @@
-const utils  = require( '../utilities' );
+const utils = require( '../utilities' );
 
 module.exports = ( req, res ) => {
 

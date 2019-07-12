@@ -1,6 +1,6 @@
-const config  = require( './config' );
-const axios = require( 'axios' );
-const url     = require( 'url' );
+const config = require( './config' );
+const axios  = require( 'axios' );
+const url    = require( 'url' );
 
 const readData = function( reqLimit = null ) {
 

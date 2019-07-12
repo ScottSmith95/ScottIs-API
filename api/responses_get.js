@@ -1,4 +1,4 @@
-const utils  = require( '../utilities' );
+const utils = require( '../utilities' );
 
 module.exports = async ( req, res ) => {
 	const reqLimit = req.query.limit;

@@ -1,77 +1,73 @@
 const config  = require( './config' );
-const request = require( 'request' );
-const fs      = require( 'fs' );
+const axios = require( 'axios' );
 const url     = require( 'url' );
 
-const dataIntegrity = function( file_name ) {
-	testExists( file_name );
-	testValidJSON( file_name );
-};
-
-const testExists = function( file_name ) {
-	fs.open( file_name, 'r', error => {
-		if ( error ) {
-			if ( error.code === 'ENOENT' ) {
-				console.log( 'Data file does not exist.' );
-				createDataFile( file_name );
-				return;
-			}
-			throw error;
+const readData = function() {
+	return axios( {
+		method: 'GET',
+		baseURL: config.data_api_root,
+		url: `/b/${ config.data_bin_id }/latest`,
+		headers: {
+			'secret-key': config.data_api_key
 		}
-		return true;
+	} )
+	.then( apiResponse => apiResponse.data )
+	.catch( error => {
+		throw error;
 	} );
 };
 
-const testValidJSON = function( file_name ) {
-	fs.readFile( file_name, 'utf8', ( error, data ) => {
-		if ( error ) {
-			console.error( error );
-			throw error;
-		}
-		if ( isJSON( data ) ) {
-			return true;
-		}
-		console.error( 'Data file invalid.' );
-		createDataFile( file_name );
-		return false;
-	} );
-};
-
-const isJSON = function( str ) {
-	try {
-		JSON.parse( str );
-	} catch ( error ) {
-		return false;
-	}
-	return true;
-};
-
-const createDataFile = function( file_name ) {
-	const obj = {};
-	const json = JSON.stringify( obj );
-	fs.writeFile( file_name, json, 'utf8', error => {
-		if ( error ) throw error;
-	} );
-	console.log( 'Data file regenerated.' );
-};
-
-const writeToDataFile = function( data, input, timestamp ) {
+const writeToData = async function( input, timestamp ) {
+	const data = await readData();
 	data[ timestamp ] = input;
-	const json = JSON.stringify( data, null, 2 );
-	fs.writeFile( config.data_file, json, 'utf8', error => {
-		if ( error ) throw error;
+
+	return axios( {
+		method: 'PUT',
+		baseURL: config.data_api_root,
+		url: `/b/${ config.data_bin_id }`,
+		headers: {
+			'secret-key': config.data_api_key,
+			'Content-Type': 'application/json'
+		},
+		data: data
+	} )
+	.then( apiResponse => {
+		console.log( 'Done.', data );
+		if ( apiResponse.success === true ) {
+			return apiResponse.data;
+		} return false;
+	} )
+	.catch( error => {
+		throw error;
 	} );
 };
 
-const deleteFromDataFile = function( data, timestamp ) {
+const deleteFromData = async function( timestamp ) {
+	const data = await readData();
+
 	if ( data[ timestamp ] ) {
 		delete data[ timestamp ];
-		const json = JSON.stringify( data, null, 2 );
-		fs.writeFile( config.data_file, json, 'utf8', error => {
-			if ( error ) throw error;
+
+		return axios( {
+			method: 'PUT',
+			baseURL: config.data_api_root,
+			url: `/b/${ config.data_bin_id }`,
+			headers: {
+				'secret-key': config.data_api_key,
+				'Content-Type': 'application/json'
+			},
+			data: data
+		} )
+		.then( apiResponse => {
+			if ( apiResponse.data.success === true ) {
+				return true;
+			} return false;
+		} )
+		.catch( error => {
+			throw error;
 		} );
-		return true;
 	}
+	console.error( 'Response timestamp not found.' );
 	return false;
 };
 
@@ -151,8 +147,26 @@ const sanitiseInput = function( input ) {
 	return inputCleaned;
 };
 
-const notBannedIP = function( ip ) {
-	for ( const banned_ip in config.banned_ips ) {
+const readBannedIps = function() {
+	axios( {
+		method: 'GET',
+		baseURL: config.data_api_root,
+		url: `/b/${ config.bans_bin_id }`,
+		headers: {
+			'secret-key': config.data_api_key
+		}
+	} )
+	.then( response => {
+		console.log( response );
+		return response;
+	} )
+	.catch( error => {
+		throw error;
+	} );
+};
+
+const notBannedIP = async function( ip ) {
+	for ( const banned_ip in await readBannedIps ) {
 		if ( ip.includes( banned_ip ) ) {
 			return false;
 		}
@@ -165,7 +179,7 @@ const domainCheck = function( origin ) {
 
 	const hostname = getHostname( origin );
 
-	if ( hostname.includes( 'scottsmith.is' ) ) {
+	if ( hostname.includes( 'scottsmith.is' ) || hostname.includes( 'now.sh' ) ) {
 		return true;
 	}
 	return false;
@@ -199,30 +213,30 @@ const postSlackWebhook = function( response, timestamp ) {
 		]
 	};
 
-	request(
-		{
-			method: 'POST',
-			url: hook_url,
-			json: payload
+	axios( {
+		method: 'POST',
+		url: hook_url,
+		headers: {
+			'secret-key': config.data_api_key,
+			'Content-Type': 'application/json'
 		},
-		function ( error, response ) {
-			if ( error ) {
-				console.error( 'Upload failed:', error );
-				if ( typeof response !== 'undefined' ) {
-					console.error( 'Response:', response );
-					if ( typeof response.statusCode !== 'undefined' ) {
-						console.error( 'Responded with code:', response.statusCode );
-					}
-				}
+		data: payload
+	} )
+	.catch( error => {
+		console.error( 'Upload failed:', error );
+		if ( typeof response !== 'undefined' ) {
+			console.error( 'Response:', response );
+			if ( typeof response.statusCode !== 'undefined' ) {
+				console.error( 'Responded with code:', response.statusCode );
 			}
 		}
-	);
+	} );
 };
 
 module.exports = {
-	dataIntegrity: dataIntegrity,
-	writeToDataFile: writeToDataFile,
-	deleteFromDataFile: deleteFromDataFile,
+	readData: readData,
+	writeToData: writeToData,
+	deleteFromData: deleteFromData,
 	getNewerResponses: getNewerResponses,
 	getTimestamp: getTimestamp,
 	isNonemptyResponse: isNonemptyResponse,

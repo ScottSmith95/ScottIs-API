@@ -1,0 +1,48 @@
+{
+	"name": "ScottSmith.is-API",
+	"version": 2,
+	"alias": [
+		"api.scottsmith.is"
+	],
+	"builds": [
+		{
+			"src": "api/**/*.js",
+			"use": "@now/node"
+		}
+	],
+	"routes": [
+		{
+			"methods": [
+				"GET"
+			],
+			"src": "/v1.4/responses",
+			"dest": "/api/responses_get.js",
+			"headers": {
+				"Access-Control-Allow-Origin": "*"
+			}
+		},
+		{
+			"methods": [
+				"POST"
+			],
+			"src": "/v1.4/responses",
+			"dest": "/api/responses_post.js",
+			"headers": {
+				"Access-Control-Allow-Origin": "*"
+			}
+		},
+		{
+			"src": "/v1.4/delete_response/(?<timestamp>[^/]+)",
+			"dest": "/api/delete_response.js?timestamp=$timestamp",
+			"headers": {
+				"Access-Control-Allow-Origin": "*"
+			}
+		}
+	],
+	"env": {
+		"JSONBIN_KEY": "@scottsmithis-jsonbin-secret-key",
+		"JSONBIN_DATA_ID": "5d26a2b93bfb607d0410791a",
+		"JSONBIN_BANS_ID": "5d26b22eb7cb98671288d8ca",
+		"SLACK_WEBHOOK": "@scottsmithis-slack-webhook"
+	}
+}

@@ -11,7 +11,7 @@ const readData = function() {
 			'secret-key': config.data_api_key
 		}
 	} )
-	.then( apiResponse => apiResponse.data )
+	.then( apiResponse => getOrderedResponses( apiResponse.data ) )
 	.catch( error => {
 		throw error;
 	} );
@@ -71,24 +71,7 @@ const deleteFromData = async function( timestamp ) {
 	return false;
 };
 
-const getNewerResponses = function( obj, limit ) {
-
-	/*
-	 * Until Node 8, use this Object.entries() polyfill.
-	 * From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries#Polyfill
-	 */
-	if ( !Object.entries ) {
-		Object.entries = function( obj ){
-			const ownProps = Object.keys( obj );
-			let i = ownProps.length;
-			let resArray = new Array( i ); // Preallocate the Array.
-			while ( i-- ) {
-				resArray[ i ] = [ ownProps[ i ], obj[ ownProps[ i ] ] ];
-			}
-			return resArray;
-		};
-	}
-
+const getOrderedResponses = function( obj, limit ) {
 	let sort_array = Object.entries( obj );
 
 	// Sort in reverse chronological order. (Newest -> Oldest)
@@ -96,8 +79,10 @@ const getNewerResponses = function( obj, limit ) {
 		return b[ 0 ] - a[ 0 ];
 	} );
 
-	// Get just the first (earliest) n items. (Newest[0:limit])
-	sort_array = sort_array.slice( 0, limit );
+	if ( typeof limit !== 'undefined' ) {
+		// Get just the first (earliest) n items. (Newest[0:limit])
+		sort_array = sort_array.slice( 0, limit );
+	}
 
 	// Sort back to chronological order. (Oldest -> Newest)
 	sort_array = sort_array.sort( function ( a, b ) {
@@ -237,7 +222,7 @@ module.exports = {
 	readData: readData,
 	writeToData: writeToData,
 	deleteFromData: deleteFromData,
-	getNewerResponses: getNewerResponses,
+	getOrderedResponses: getOrderedResponses,
 	getTimestamp: getTimestamp,
 	isNonemptyResponse: isNonemptyResponse,
 	isUniqueResponse: isUniqueResponse,

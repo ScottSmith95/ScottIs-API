@@ -146,9 +146,7 @@ const readBannedIps = function() {
 			'secret-key': config.data_api_key
 		}
 	} )
-	.then( response => {
-		return response;
-	} )
+	.then( response => response )
 	.catch( error => {
 		throw error;
 	} );

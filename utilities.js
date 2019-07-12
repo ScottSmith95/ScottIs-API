@@ -118,7 +118,6 @@ const isUniqueResponse = function( input, data ) {
 	const inputTest = input.toLowerCase();
 
 	for ( const timestamp in data ) {
-		// console.log('data.' + timestamp, '=', data[timestamp]);
 		if ( data[ timestamp ].toLowerCase() == inputTest ) {
 			console.log( 'Duplicate response.' );
 			return false;
@@ -200,14 +199,17 @@ const postSlackWebhook = function( response, timestamp ) {
 		]
 	};
 
-	axios( {
+	return axios( {
 		method: 'POST',
 		url: hook_url,
-		headers: {
-			'secret-key': config.data_api_key,
-			'Content-Type': 'application/json'
-		},
-		data: payload
+		data: JSON.stringify( payload ),
+		withCredentials: false,
+		transformRequest: [
+			( data, headers ) => {
+				delete headers.post[ 'Content-Type' ];
+				return data;
+			}
+		]
 	} )
 	.catch( error => {
 		console.error( 'Upload failed:', error );

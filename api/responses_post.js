@@ -21,17 +21,17 @@ module.exports = async ( req, res ) => {
 		&& ( await utils.notBannedIP( ip ) )
 	) {
 		utils.writeToData( input, timestamp )
-		.then( () => {
-			utils.postSlackWebhook( input, timestamp );
+		.then( async () => {
+			await utils.postSlackWebhook( input, timestamp );
 
 			const response = { 'status': 'Success. Response recorded.' };
 			response.response = input;
 			res.status( 200 );
 			res.json( response );
 		} )
-		.catch( err => {
-			console.error( err );
-			res.status( 500 ).send( err );
+		.catch( error => {
+			console.error( error );
+			res.status( 500 ).send( error );
 		} );
 	} else {
 		if ( baseURL ) {

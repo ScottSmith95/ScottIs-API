@@ -44,5 +44,8 @@
 		"JSONBIN_DATA_ID": "5d26a2b93bfb607d0410791a",
 		"JSONBIN_BANS_ID": "5d26b22eb7cb98671288d8ca",
 		"SLACK_WEBHOOK": "@scottsmithis-slack-webhook"
+	},
+	"github": {
+		"silent": true
 	}
 }

@@ -2,7 +2,13 @@ const config  = require( './config' );
 const axios = require( 'axios' );
 const url     = require( 'url' );
 
-const readData = function() {
+const readData = function( reqLimit = null ) {
+
+	let limit = reqLimit;
+	if ( typeof limit === 'string' ) {
+		limit = Number( reqLimit );
+	}
+
 	return axios( {
 		method: 'GET',
 		baseURL: config.data_api_root,
@@ -11,7 +17,7 @@ const readData = function() {
 			'secret-key': config.data_api_key
 		}
 	} )
-	.then( apiResponse => getOrderedResponses( apiResponse.data ) )
+	.then( apiResponse => getOrderedResponses( apiResponse.data, limit ) )
 	.catch( error => {
 		throw error;
 	} );
@@ -32,7 +38,6 @@ const writeToData = async function( input, timestamp ) {
 		data: data
 	} )
 	.then( apiResponse => {
-		console.log( 'Done.', data );
 		if ( apiResponse.success === true ) {
 			return apiResponse.data;
 		} return false;
@@ -74,12 +79,12 @@ const deleteFromData = async function( timestamp ) {
 const getOrderedResponses = function( obj, limit ) {
 	let sort_array = Object.entries( obj );
 
-	// Sort in reverse chronological order. (Newest -> Oldest)
-	sort_array = sort_array.sort( function ( a, b ) {
-		return b[ 0 ] - a[ 0 ];
-	} );
+	if ( typeof limit === 'number' ) {
+		// Sort in reverse chronological order. (Newest -> Oldest)
+		sort_array = sort_array.sort( function ( a, b ) {
+			return b[ 0 ] - a[ 0 ];
+		} );
 
-	if ( typeof limit !== 'undefined' ) {
 		// Get just the first (earliest) n items. (Newest[0:limit])
 		sort_array = sort_array.slice( 0, limit );
 	}
@@ -133,7 +138,7 @@ const sanitiseInput = function( input ) {
 };
 
 const readBannedIps = function() {
-	axios( {
+	return axios( {
 		method: 'GET',
 		baseURL: config.data_api_root,
 		url: `/b/${ config.bans_bin_id }`,
@@ -142,7 +147,6 @@ const readBannedIps = function() {
 		}
 	} )
 	.then( response => {
-		console.log( response );
 		return response;
 	} )
 	.catch( error => {

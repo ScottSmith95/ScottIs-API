@@ -1,9 +1,6 @@
 {
 	"name": "ScottSmith.is-API",
 	"version": 2,
-	"alias": [
-		"api.scottsmith.is"
-	],
 	"builds": [
 		{
 			"src": "api/**/*.js",

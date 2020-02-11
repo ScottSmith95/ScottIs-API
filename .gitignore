@@ -1,7 +1,10 @@
-node_modules/
 .DS_Store
 .env
+.nova
 pm2.config.js
+
+.now
+node_modules/
 
 # Data
 data.json

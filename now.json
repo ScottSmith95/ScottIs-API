@@ -1,12 +1,5 @@
 {
-	"name": "ScottSmith.is-API",
 	"version": 2,
-	"builds": [
-		{
-			"src": "api/**/*.js",
-			"use": "@now/node"
-		}
-	],
 	"routes": [
 		{
 			"methods": [

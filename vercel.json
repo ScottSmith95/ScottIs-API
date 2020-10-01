@@ -16,7 +16,10 @@
 				"POST"
 			],
 			"src": "/v1.4/responses",
-			"dest": "/api/responses_post.js"
+			"dest": "/api/responses_post.js",
+			"headers": {
+				"Access-Control-Allow-Origin": "*"
+			}
 		},
 		{
 			"src": "/v1.4/delete_response/(?<timestamp>[^/]+)",

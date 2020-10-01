@@ -2,59 +2,35 @@ const config = require( './config' );
 const axios  = require( 'axios' );
 const url    = require( 'url' );
 
-function readData( reqLimit = null ) {
+async function readData( reqLimit = null ) {
 	let limit = reqLimit;
 	if ( typeof limit === 'string' ) {
 		limit = Number( reqLimit );
 	}
 
-	return axios( {
-		method: 'GET',
-		baseURL: config.data_api_root,
-		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-		headers: {
-			'X-Auth-Email': config.cf_auth_email,
-			'X-Auth-Key': config.cf_auth_key
-		}
-	} )
-	.then( apiResponse => getOrderedResponses( apiResponse.data, limit ) )
-	.catch( error => {
+	try {
+		const apiResponse = await axios( {
+			method: 'GET',
+			baseURL: config.data_api_root,
+			url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+			headers: {
+				'X-Auth-Email': config.cf_auth_email,
+				'X-Auth-Key': config.cf_auth_key
+			}
+		} );
+		return getOrderedResponses( apiResponse.data, limit );
+	}
+	catch( error ) {
 		throw error;
-	} );
+	}
 };
 
 async function writeToData( input, timestamp ) {
 	const data = await readData();
 	data[ timestamp ] = input;
 
-	return axios( {
-		method: 'PUT',
-		baseURL: config.data_api_root,
-		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-		headers: {
-			'X-Auth-Email': config.cf_auth_email,
-			'X-Auth-Key': config.cf_auth_key,
-			'Content-Type': 'application/json'
-		},
-		data: data
-	} )
-	.then( apiResponse => {
-		if ( apiResponse.success === true ) {
-			return apiResponse.data;
-		} return false;
-	} )
-	.catch( error => {
-		throw error;
-	} );
-};
-
-async function deleteFromData( timestamp ) {
-	const data = await readData();
-
-	if ( data[ timestamp ] ) {
-		delete data[ timestamp ];
-
-		return axios( {
+	try {
+		const apiResponse = await axios( {
 			method: 'PUT',
 			baseURL: config.data_api_root,
 			url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
@@ -64,15 +40,42 @@ async function deleteFromData( timestamp ) {
 				'Content-Type': 'application/json'
 			},
 			data: data
-		} )
-		.then( apiResponse => {
+		} );
+
+		if ( apiResponse.success === true ) {
+			return apiResponse.data;
+		} return false;
+	}
+	catch( error ) {
+		throw error;
+	}
+};
+
+async function deleteFromData( timestamp ) {
+	const data = await readData();
+
+	if ( data[ timestamp ] ) {
+		delete data[ timestamp ];
+
+		try {
+			const apiResponse = await axios( {
+				method: 'PUT',
+				baseURL: config.data_api_root,
+				url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+				headers: {
+					'X-Auth-Email': config.cf_auth_email,
+					'X-Auth-Key': config.cf_auth_key,
+					'Content-Type': 'application/json'
+				},
+				data: data
+			} );
 			if ( apiResponse.data.success === true ) {
 				return true;
 			} return false;
-		} )
-		.catch( error => {
+		}
+		catch( error ) {
 			throw error;
-		} );
+		}
 	}
 	console.error( 'Response timestamp not found.' );
 	return false;

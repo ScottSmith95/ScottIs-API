@@ -1,11 +1,7 @@
 .DS_Store
 .env
 .nova
+.vercel
 pm2.config.js
 
-.now
 node_modules/
-
-# Data
-data.json
-bans.json

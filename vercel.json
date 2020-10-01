@@ -16,10 +16,7 @@
 				"POST"
 			],
 			"src": "/v1.4/responses",
-			"dest": "/api/responses_post.js",
-			"headers": {
-				"Access-Control-Allow-Origin": "*"
-			}
+			"dest": "/api/responses_post.js"
 		},
 		{
 			"src": "/v1.4/delete_response/(?<timestamp>[^/]+)",
@@ -30,9 +27,10 @@
 		}
 	],
 	"env": {
-		"JSONBIN_KEY": "@scottsmithis-jsonbin-secret-key",
-		"JSONBIN_DATA_ID": "5d26a2b93bfb607d0410791a",
-		"JSONBIN_BANS_ID": "5d26b22eb7cb98671288d8ca",
+		"CF_ACCOUNTID": "@scottsmithis-cf-accountid",
+		"CF_KV_NAMESPACEID": "@scottsmithis-cf-kv-namespaceid",
+		"CF_AUTH_EMAIL": "@scottsmithis-cf-auth-email",
+		"CF_AUTH_KEY": "@scottsmithis-cf-auth-key",
 		"SLACK_WEBHOOK": "@scottsmithis-slack-webhook"
 	},
 	"github": {

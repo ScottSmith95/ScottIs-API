@@ -12,6 +12,7 @@ module.exports = async ( req, res ) => {
 
 	if ( origin ) {
 		baseURL = utils.getBaseURL( origin );
+		res.append( 'Access-Control-Allow-Origin', baseURL );
 	}
 
 	if (
@@ -34,9 +35,7 @@ module.exports = async ( req, res ) => {
 			res.status( 500 ).send( error );
 		} );
 	} else {
-		if ( baseURL ) {
-			res.append( 'Access-Control-Allow-Origin', baseURL ); // Since Nginx will not (by default) use add_headers on 202 responses.
-		}
+
 		const response = { 'status': 'Response is a duplicate or empty.' };
 		response.response = input;
 		res.status( 202 ).json( response );

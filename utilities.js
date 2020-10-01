@@ -2,8 +2,7 @@ const config = require( './config' );
 const axios  = require( 'axios' );
 const url    = require( 'url' );
 
-const readData = function( reqLimit = null ) {
-
+function readData( reqLimit = null ) {
 	let limit = reqLimit;
 	if ( typeof limit === 'string' ) {
 		limit = Number( reqLimit );
@@ -12,9 +11,10 @@ const readData = function( reqLimit = null ) {
 	return axios( {
 		method: 'GET',
 		baseURL: config.data_api_root,
-		url: `/b/${ config.data_bin_id }/latest`,
+		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
 		headers: {
-			'secret-key': config.data_api_key
+			'X-Auth-Email': config.cf_auth_email,
+			'X-Auth-Key': config.cf_auth_key
 		}
 	} )
 	.then( apiResponse => getOrderedResponses( apiResponse.data, limit ) )
@@ -23,16 +23,17 @@ const readData = function( reqLimit = null ) {
 	} );
 };
 
-const writeToData = async function( input, timestamp ) {
+async function writeToData( input, timestamp ) {
 	const data = await readData();
 	data[ timestamp ] = input;
 
 	return axios( {
 		method: 'PUT',
 		baseURL: config.data_api_root,
-		url: `/b/${ config.data_bin_id }`,
+		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
 		headers: {
-			'secret-key': config.data_api_key,
+			'X-Auth-Email': config.cf_auth_email,
+			'X-Auth-Key': config.cf_auth_key,
 			'Content-Type': 'application/json'
 		},
 		data: data
@@ -47,7 +48,7 @@ const writeToData = async function( input, timestamp ) {
 	} );
 };
 
-const deleteFromData = async function( timestamp ) {
+async function deleteFromData( timestamp ) {
 	const data = await readData();
 
 	if ( data[ timestamp ] ) {
@@ -56,9 +57,10 @@ const deleteFromData = async function( timestamp ) {
 		return axios( {
 			method: 'PUT',
 			baseURL: config.data_api_root,
-			url: `/b/${ config.data_bin_id }`,
+			url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
 			headers: {
-				'secret-key': config.data_api_key,
+				'X-Auth-Email': config.cf_auth_email,
+				'X-Auth-Key': config.cf_auth_key,
 				'Content-Type': 'application/json'
 			},
 			data: data
@@ -76,7 +78,7 @@ const deleteFromData = async function( timestamp ) {
 	return false;
 };
 
-const getOrderedResponses = function( obj, limit ) {
+function getOrderedResponses( obj, limit ) {
 	let sort_array = Object.entries( obj );
 
 	if ( typeof limit === 'number' ) {
@@ -100,11 +102,11 @@ const getOrderedResponses = function( obj, limit ) {
 	return arrayToObject( sort_array );
 };
 
-const getTimestamp = function() {
+function getTimestamp() {
 	return Date.now();
 };
 
-const isNonemptyResponse = function( input ) {
+function isNonemptyResponse( input ) {
 	if ( typeof input === 'undefined' ) {
 		return false;
 	}
@@ -114,12 +116,12 @@ const isNonemptyResponse = function( input ) {
 	return true;
 };
 
-const isUniqueResponse = function( input, data ) {
+function isUniqueResponse( input, data ) {
 	const inputTest = input.toLowerCase();
 
 	for ( const timestamp in data ) {
 		if ( data[ timestamp ].toLowerCase() == inputTest ) {
-			console.log( 'Duplicate response.' );
+			console.log( 'Duplicate response entered.' );
 			return false;
 		}
 	}
@@ -127,41 +129,43 @@ const isUniqueResponse = function( input, data ) {
 	return true;
 };
 
-const sanitiseInput = function( input ) {
+function sanitiseInput( input ) {
 	let inputCleaned = input;
 	inputCleaned = inputCleaned.trim();
-	inputCleaned = inputCleaned.replace( /\b[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\B|\B[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\b/g, '' ); // Remove punctuation at beginnng or end of words
+	inputCleaned = inputCleaned.replace( /\b[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\B|\B[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\b/g, '' ); // Remove punctuation at beginning or end of words
 	inputCleaned = inputCleaned.replace( /(<([^>]+)>)/ig, '' ); // Remove HTML tags
 
 	return inputCleaned;
 };
 
-const readBannedIps = function() {
-	return axios( {
-		method: 'GET',
-		baseURL: config.data_api_root,
-		url: `/b/${ config.bans_bin_id }`,
-		headers: {
-			'secret-key': config.data_api_key
-		}
-	} )
-	.then( response => response )
-	.catch( error => {
-		throw error;
-	} );
+async function readBannedIps() {
+	try {
+		const bannedIps = await axios( {
+			method: 'GET',
+			baseURL: config.data_api_root,
+			url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/bans`,
+			headers: {
+				'X-Auth-Email': config.cf_auth_email,
+				'X-Auth-Key': config.cf_auth_key
+			}
+		} )
+		return bannedIps.data;
+	}
+	catch ( error ) {
+		console.error( error );
+	}
 };
 
-const notBannedIP = async function( ip ) {
-	for ( const banned_ip in await readBannedIps ) {
-		if ( ip.includes( banned_ip ) ) {
-			return false;
-		}
+async function notBannedIP( ip ) {
+	const bannedIps = await readBannedIps();
+	if ( bannedIps.includes( ip ) ) {
+		return false;
 	}
 
 	return true;
 };
 
-const domainCheck = function( origin ) {
+function domainCheck( origin ) {
 
 	const hostname = getHostname( origin );
 
@@ -171,7 +175,7 @@ const domainCheck = function( origin ) {
 	return false;
 };
 
-const getBaseURL = function( origin ) {
+function getBaseURL( origin ) {
 	const origin_parsed = url.parse( origin, true, true );
 	const hostname = origin_parsed.hostname;
 	const protocol = origin_parsed.protocol;
@@ -180,12 +184,12 @@ const getBaseURL = function( origin ) {
 	return baseURL;
 };
 
-const getHostname = function( origin ) {
+function getHostname( origin ) {
 	const origin_parsed = url.parse( origin, true, true );
 	return origin_parsed.hostname;
 };
 
-const postSlackWebhook = function( response, timestamp ) {
+async function postSlackWebhook( response, timestamp ) {
 	const hook_url = config.slackWebhookURL;
 	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
 	const payload = {
@@ -199,19 +203,21 @@ const postSlackWebhook = function( response, timestamp ) {
 		]
 	};
 
-	return axios( {
-		method: 'POST',
-		url: hook_url,
-		data: JSON.stringify( payload ),
-		withCredentials: false,
-		transformRequest: [
-			( data, headers ) => {
-				delete headers.post[ 'Content-Type' ];
-				return data;
-			}
-		]
-	} )
-	.catch( error => {
+	try {
+		return axios( {
+			method: 'POST',
+			url: hook_url,
+			data: JSON.stringify( payload ),
+			withCredentials: false,
+			transformRequest: [
+				( data, headers ) => {
+					delete headers.post[ 'Content-Type' ];
+					return data;
+				}
+			]
+		} )
+	}
+	catch (error) {
 		console.error( 'Upload failed:', error );
 		if ( typeof response !== 'undefined' ) {
 			console.error( 'Response:', response );
@@ -219,7 +225,7 @@ const postSlackWebhook = function( response, timestamp ) {
 				console.error( 'Responded with code:', response.statusCode );
 			}
 		}
-	} );
+	}
 };
 
 module.exports = {

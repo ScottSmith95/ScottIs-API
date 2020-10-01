@@ -18,10 +18,10 @@
     "test": "eslint --ignore-path .gitignore ./"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.20.0",
     "semver": "^7.3.2"
   },
   "devDependencies": {
-    "eslint": "^7.0.0"
+    "eslint": "^7.10.0"
   }
 }

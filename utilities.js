@@ -8,28 +8,45 @@ async function readData( reqLimit = null ) {
 		limit = Number( reqLimit );
 	}
 
-	try {
-		const apiResponse = await axios( {
-			method: 'GET',
-			baseURL: config.data_api_root,
-			url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-			headers: {
-				'X-Auth-Email': config.cf_auth_email,
-				'X-Auth-Key': config.cf_auth_key
-			}
-		} );
-		return getOrderedResponses( apiResponse.data, limit );
-	}
-	catch( error ) {
-		throw error;
-	}
-};
+	const apiResponse = await axios( {
+		method: 'GET',
+		baseURL: config.data_api_root,
+		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+		headers: {
+			'X-Auth-Email': config.cf_auth_email,
+			'X-Auth-Key': config.cf_auth_key
+		}
+	} );
+	return getOrderedResponses( apiResponse.data, limit );
+}
 
 async function writeToData( input, timestamp ) {
 	const data = await readData();
 	data[ timestamp ] = input;
 
-	try {
+	const apiResponse = await axios( {
+		method: 'PUT',
+		baseURL: config.data_api_root,
+		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+		headers: {
+			'X-Auth-Email': config.cf_auth_email,
+			'X-Auth-Key': config.cf_auth_key,
+			'Content-Type': 'application/json'
+		},
+		data: data
+	} );
+
+	if ( apiResponse.success === true ) {
+		return apiResponse.data;
+	} return false;
+}
+
+async function deleteFromData( timestamp ) {
+	const data = await readData();
+
+	if ( data[ timestamp ] ) {
+		delete data[ timestamp ];
+
 		const apiResponse = await axios( {
 			method: 'PUT',
 			baseURL: config.data_api_root,
@@ -41,45 +58,13 @@ async function writeToData( input, timestamp ) {
 			},
 			data: data
 		} );
-
-		if ( apiResponse.success === true ) {
-			return apiResponse.data;
+		if ( apiResponse.data.success === true ) {
+			return true;
 		} return false;
-	}
-	catch( error ) {
-		throw error;
-	}
-};
-
-async function deleteFromData( timestamp ) {
-	const data = await readData();
-
-	if ( data[ timestamp ] ) {
-		delete data[ timestamp ];
-
-		try {
-			const apiResponse = await axios( {
-				method: 'PUT',
-				baseURL: config.data_api_root,
-				url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-				headers: {
-					'X-Auth-Email': config.cf_auth_email,
-					'X-Auth-Key': config.cf_auth_key,
-					'Content-Type': 'application/json'
-				},
-				data: data
-			} );
-			if ( apiResponse.data.success === true ) {
-				return true;
-			} return false;
-		}
-		catch( error ) {
-			throw error;
-		}
 	}
 	console.error( 'Response timestamp not found.' );
 	return false;
-};
+}
 
 function getOrderedResponses( obj, limit ) {
 	let sort_array = Object.entries( obj );
@@ -103,11 +88,11 @@ function getOrderedResponses( obj, limit ) {
 	const arrayToObject = arr => Object.assign( {}, ...arr.map( item => ( { [ item[ 0 ] ]: item[ 1 ] } ) ) );
 
 	return arrayToObject( sort_array );
-};
+}
 
 function getTimestamp() {
 	return Date.now();
-};
+}
 
 function isNonemptyResponse( input ) {
 	if ( typeof input === 'undefined' ) {
@@ -117,7 +102,7 @@ function isNonemptyResponse( input ) {
 		return false;
 	}
 	return true;
-};
+}
 
 function isUniqueResponse( input, data ) {
 	const inputTest = input.toLowerCase();
@@ -130,7 +115,7 @@ function isUniqueResponse( input, data ) {
 	}
 
 	return true;
-};
+}
 
 function sanitiseInput( input ) {
 	let inputCleaned = input;
@@ -139,25 +124,20 @@ function sanitiseInput( input ) {
 	inputCleaned = inputCleaned.replace( /(<([^>]+)>)/ig, '' ); // Remove HTML tags
 
 	return inputCleaned;
-};
+}
 
 async function readBannedIps() {
-	try {
-		const bannedIps = await axios( {
-			method: 'GET',
-			baseURL: config.data_api_root,
-			url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/bans`,
-			headers: {
-				'X-Auth-Email': config.cf_auth_email,
-				'X-Auth-Key': config.cf_auth_key
-			}
-		} )
-		return bannedIps.data;
-	}
-	catch ( error ) {
-		console.error( error );
-	}
-};
+	const bannedIps = await axios( {
+		method: 'GET',
+		baseURL: config.data_api_root,
+		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/bans`,
+		headers: {
+			'X-Auth-Email': config.cf_auth_email,
+			'X-Auth-Key': config.cf_auth_key
+		}
+	} );
+	return bannedIps.data;
+}
 
 async function notBannedIP( ip ) {
 	const bannedIps = await readBannedIps();
@@ -166,7 +146,7 @@ async function notBannedIP( ip ) {
 	}
 
 	return true;
-};
+}
 
 function domainCheck( origin ) {
 
@@ -176,7 +156,7 @@ function domainCheck( origin ) {
 		return true;
 	}
 	return false;
-};
+}
 
 function getBaseURL( origin ) {
 	const origin_parsed = url.parse( origin, true, true );
@@ -185,14 +165,14 @@ function getBaseURL( origin ) {
 	const baseURL  = `${ protocol }//${ hostname }`;
 
 	return baseURL;
-};
+}
 
 function getHostname( origin ) {
 	const origin_parsed = url.parse( origin, true, true );
 	return origin_parsed.hostname;
-};
+}
 
-async function postSlackWebhook( response, timestamp ) {
+function postSlackWebhook( response, timestamp ) {
 	const hook_url = config.slackWebhookURL;
 	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
 	const payload = {
@@ -218,9 +198,8 @@ async function postSlackWebhook( response, timestamp ) {
 					return data;
 				}
 			]
-		} )
-	}
-	catch (error) {
+		} );
+	} catch ( error ) {
 		console.error( 'Upload failed:', error );
 		if ( typeof response !== 'undefined' ) {
 			console.error( 'Response:', response );
@@ -229,7 +208,7 @@ async function postSlackWebhook( response, timestamp ) {
 			}
 		}
 	}
-};
+}
 
 module.exports = {
 	readData: readData,

@@ -11,6 +11,7 @@ module.exports = async ( req, res ) => {
 	let baseURL;
 	if ( origin ) {
 		baseURL = utils.getBaseURL( origin );
+		// res.setHeader('Access-Control-Allow-Origin', baseURL);
 	}
 
 	if (
@@ -33,7 +34,6 @@ module.exports = async ( req, res ) => {
 			res.status( 500 ).send( error );
 		} );
 	} else {
-
 		const response = { 'status': 'Response is a duplicate or empty.' };
 		response.response = input;
 		res.status( 202 ).json( response );

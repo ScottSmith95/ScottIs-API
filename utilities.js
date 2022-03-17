@@ -61,7 +61,10 @@ async function deleteFromData( timestamp ) {
 				body: JSON.stringify( existingData )
 			}
 		);
-		if ( await apiResponse.json().success === true ) {
+
+		const apiResponseJson = await apiResponse.json();
+
+		if ( apiResponseJson.success === true ) {
 			return true;
 		} return false;
 	}

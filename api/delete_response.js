@@ -8,14 +8,14 @@ module.exports = ( req, res ) => {
 	.then( status => {
 		if ( status ) {
 			const response = { 'status': 'Success. Response deleted.' };
-			res.status( 200 ).json( response );
-		} else {
-			const response = { 'status': 'Response not found.' };
-			res.status( 202 ).json( response );
+			return res.status( 200 ).json( response );
 		}
+
+		const response = { 'status': 'Response not found.' };
+		return res.status( 202 ).json( response );
 	} )
 	.catch( error => {
 		console.error( error );
-		res.status( 500 ).send( error );
+		return res.status( 500 ).send( error );
 	} );
 };

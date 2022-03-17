@@ -1,5 +1,5 @@
 const config = require( './config' );
-const axios  = require( 'axios' );
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const url    = require( 'url' );
 
 async function readData( reqLimit = null ) {
@@ -8,57 +8,60 @@ async function readData( reqLimit = null ) {
 		limit = Number( reqLimit );
 	}
 
-	const apiResponse = await axios( {
-		method: 'GET',
-		baseURL: config.data_api_root,
-		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-		headers: {
-			'X-Auth-Email': config.cf_auth_email,
-			'X-Auth-Key': config.cf_auth_key
+	const apiResponse = await fetch(
+		`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+		{
+			method: 'GET',
+			headers: {
+				'X-Auth-Email': config.cf_auth_email,
+				'X-Auth-Key': config.cf_auth_key
+			}
 		}
-	} );
-	return getOrderedResponses( apiResponse.data, limit );
+	);
+	return getOrderedResponses( await apiResponse.json(), limit );
 }
 
 async function writeToData( input, timestamp ) {
-	const data = await readData();
-	data[ timestamp ] = input;
+	const existingData = await readData();
+	existingData[ timestamp ] = input;
 
-	const apiResponse = await axios( {
-		method: 'PUT',
-		baseURL: config.data_api_root,
-		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-		headers: {
-			'X-Auth-Email': config.cf_auth_email,
-			'X-Auth-Key': config.cf_auth_key,
-			'Content-Type': 'application/json'
-		},
-		data: data
-	} );
-
-	if ( apiResponse.success === true ) {
-		return apiResponse.data;
-	} return false;
-}
-
-async function deleteFromData( timestamp ) {
-	const data = await readData();
-
-	if ( data[ timestamp ] ) {
-		delete data[ timestamp ];
-
-		const apiResponse = await axios( {
+	const apiResponse = await fetch(
+		`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+		{
 			method: 'PUT',
-			baseURL: config.data_api_root,
-			url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
 			headers: {
 				'X-Auth-Email': config.cf_auth_email,
 				'X-Auth-Key': config.cf_auth_key,
 				'Content-Type': 'application/json'
 			},
-			data: data
-		} );
-		if ( apiResponse.data.success === true ) {
+			body: JSON.stringify( existingData )
+		}
+	);
+
+	if ( apiResponse.success === true ) {
+		return await apiResponse.json();
+	} return false;
+}
+
+async function deleteFromData( timestamp ) {
+	const existingData = await readData();
+
+	if ( existingData[ timestamp ] ) {
+		delete existingData[ timestamp ];
+
+		const apiResponse = await fetch(
+			`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+			{
+				method: 'PUT',
+				headers: {
+					'X-Auth-Email': config.cf_auth_email,
+					'X-Auth-Key': config.cf_auth_key,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify( existingData )
+			}
+		);
+		if ( await apiResponse.json().success === true ) {
 			return true;
 		} return false;
 	}
@@ -127,16 +130,17 @@ function sanitiseInput( input ) {
 }
 
 async function readBannedIps() {
-	const bannedIps = await axios( {
-		method: 'GET',
-		baseURL: config.data_api_root,
-		url: `accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/bans`,
-		headers: {
-			'X-Auth-Email': config.cf_auth_email,
-			'X-Auth-Key': config.cf_auth_key
+	const bannedIps = await fetch(
+		`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/bans`,
+		{
+			method: 'GET',
+			headers: {
+				'X-Auth-Email': config.cf_auth_email,
+				'X-Auth-Key': config.cf_auth_key,
+			}
 		}
-	} );
-	return bannedIps.data;
+	);
+	return await bannedIps.json();
 }
 
 async function notBannedIP( ip ) {
@@ -172,7 +176,7 @@ function getHostname( origin ) {
 	return origin_parsed.hostname;
 }
 
-function postSlackWebhook( response, timestamp ) {
+async function postSlackWebhook( response, timestamp ) {
 	const hook_url = config.slackWebhookURL;
 	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
 	const payload = {
@@ -187,18 +191,20 @@ function postSlackWebhook( response, timestamp ) {
 	};
 
 	try {
-		return axios( {
-			method: 'POST',
-			url: hook_url,
-			data: JSON.stringify( payload ),
-			withCredentials: false,
-			transformRequest: [
-				( data, headers ) => {
-					delete headers.post[ 'Content-Type' ];
-					return data;
-				}
-			]
-		} );
+		const slackResponse = await fetch(
+			hook_url,
+			{
+				method: 'POST',
+				headers: {
+					'X-Auth-Email': config.cf_auth_email,
+					'X-Auth-Key': config.cf_auth_key,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify( payload )
+			}
+		);
+
+		return await slackResponse.text();
 	} catch ( error ) {
 		console.error( 'Upload failed:', error );
 		if ( typeof response !== 'undefined' ) {

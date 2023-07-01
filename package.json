@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "node-fetch": "^3.2.3",
-    "semver": "^7.3.8"
+    "semver": "^7.5.2"
   },
   "devDependencies": {
     "eslint": "^8.36.0"

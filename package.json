@@ -5,7 +5,7 @@
   "author": "Scott Smith",
   "license": "MIT",
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "repository": {
     "type": "git",
@@ -18,10 +18,10 @@
     "test": "eslint --ignore-path .gitignore ./"
   },
   "dependencies": {
-    "node-fetch": "^3.2.3",
+    "node-fetch": "^3.3.2",
     "semver": "^7.3.8"
   },
   "devDependencies": {
-    "eslint": "^8.36.0"
+    "eslint": "^9.0.0"
   }
 }

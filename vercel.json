@@ -1,5 +1,4 @@
 {
-	"version": 2,
 	"routes": [
 		{
 			"methods": [
@@ -29,13 +28,6 @@
 			}
 		}
 	],
-	"env": {
-		"CF_ACCOUNTID": "@scottsmithis-cf-accountid",
-		"CF_KV_NAMESPACEID": "@scottsmithis-cf-kv-namespaceid",
-		"CF_AUTH_EMAIL": "@scottsmithis-cf-auth-email",
-		"CF_AUTH_KEY": "@scottsmithis-cf-auth-key",
-		"SLACK_WEBHOOK": "@scottsmithis-slack-webhook"
-	},
 	"github": {
 		"silent": true
 	}

@@ -1,5 +1,9 @@
-const semver = require( 'semver' );
-const api_semver = require( './package.json' )[ 'version' ];
+import semver from 'semver';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const appPackage = JSON.parse( readFileSync( join( process.cwd(), 'package.json' ), 'utf8' ) );
+const api_semver = appPackage[ 'version' ];
 
 const config  = {};
 config.base_url = process.env.BASE_URL || 'https://api.scottsmith.is/';
@@ -11,4 +15,4 @@ config.cf_auth_email = process.env.CF_AUTH_EMAIL;
 config.cf_auth_key = process.env.CF_AUTH_KEY;
 config.slackWebhookURL = process.env.SLACK_WEBHOOK;
 
-module.exports = config;
+export default config;

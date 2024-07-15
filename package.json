@@ -4,6 +4,7 @@
   "description": "What do people really think about you?",
   "author": "Scott Smith",
   "license": "MIT",
+  "type": "module",
   "engines": {
     "node": "20.x"
   },
@@ -19,9 +20,9 @@
   },
   "dependencies": {
     "node-fetch": "^3.3.2",
-    "semver": "^7.3.8"
+    "semver": "^7.6.2"
   },
   "devDependencies": {
-    "eslint": "^9.0.0"
+    "eslint": "^9.7.0"
   }
 }

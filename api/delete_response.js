@@ -1,6 +1,6 @@
-const utils = require( '../utilities' );
+import utils from '../utilities.js';
 
-module.exports = ( req, res ) => {
+export default async ( req, res ) => {
 
 	const timestamp = req.query.timestamp;
 

@@ -1,6 +1,6 @@
-const utils = require( '../utilities' );
+import utils from '../utilities.js';
 
-module.exports = async ( req, res ) => {
+export default async ( req, res ) => {
 	const reqLimit = req.query.limit;
 
 	const data = await utils.readData( reqLimit );

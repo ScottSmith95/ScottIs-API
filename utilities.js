@@ -1,6 +1,6 @@
-const config = require( './config' );
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const url    = require( 'url' );
+import config from './config.js';
+import fetch from 'node-fetch';
+import url from 'url';
 
 async function readData( reqLimit = null ) {
 	let limit = reqLimit;
@@ -219,17 +219,17 @@ async function postSlackWebhook( response, timestamp ) {
 	}
 }
 
-module.exports = {
-	readData: readData,
-	writeToData: writeToData,
-	deleteFromData: deleteFromData,
-	getOrderedResponses: getOrderedResponses,
-	getTimestamp: getTimestamp,
-	isNonemptyResponse: isNonemptyResponse,
-	isUniqueResponse: isUniqueResponse,
-	notBannedIP: notBannedIP,
-	sanitiseInput: sanitiseInput,
-	domainCheck: domainCheck,
-	getBaseURL: getBaseURL,
-	postSlackWebhook: postSlackWebhook
+export default {
+	readData,
+	writeToData,
+	deleteFromData,
+	getOrderedResponses,
+	getTimestamp,
+	isNonemptyResponse,
+	isUniqueResponse,
+	notBannedIP,
+	sanitiseInput,
+	domainCheck,
+	getBaseURL,
+	postSlackWebhook
 };

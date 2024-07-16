@@ -199,8 +199,6 @@ async function postSlackWebhook( response, timestamp ) {
 			{
 				method: 'POST',
 				headers: {
-					'X-Auth-Email': config.cf_auth_email,
-					'X-Auth-Key': config.cf_auth_key,
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify( payload )
@@ -208,6 +206,45 @@ async function postSlackWebhook( response, timestamp ) {
 		);
 
 		return await slackResponse.text();
+	} catch ( error ) {
+		console.error( 'Upload failed:', error );
+		if ( typeof response !== 'undefined' ) {
+			console.error( 'Response:', response );
+			if ( typeof response.statusCode !== 'undefined' ) {
+				console.error( 'Responded with code:', response.statusCode );
+			}
+		}
+	}
+}
+
+async function postPushcutWebhook( response, timestamp ) {
+	const hook_url = config.pushcutWebhookURL;
+	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
+	const payload = {
+		'text': response,
+		'actions': [
+			{
+				'name': 'Delete Response',
+				'input': timestamp,
+				'id': timestamp,
+				'url': delete_url
+			}
+		],
+	};
+
+	try {
+		const pushcutResponse = await fetch(
+			hook_url,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify( payload )
+			}
+		);
+
+		return await pushcutResponse.text();
 	} catch ( error ) {
 		console.error( 'Upload failed:', error );
 		if ( typeof response !== 'undefined' ) {
@@ -231,5 +268,6 @@ export default {
 	sanitiseInput,
 	domainCheck,
 	getBaseURL,
-	postSlackWebhook
+	postSlackWebhook,
+	postPushcutWebhook
 };

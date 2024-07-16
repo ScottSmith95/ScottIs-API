@@ -23,6 +23,7 @@ export default async ( req, res ) => {
 		utils.writeToData( input, timestamp )
 		.then( async () => {
 			await utils.postSlackWebhook( input, timestamp );
+			await utils.postPushcutWebhook( input, timestamp );
 
 			const response = { 'status': 'Success. Response recorded.' };
 			response.response = input;

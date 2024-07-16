@@ -14,5 +14,6 @@ config.cf_kv_namespace_id = process.env.CF_KV_NAMESPACEID;
 config.cf_auth_email = process.env.CF_AUTH_EMAIL;
 config.cf_auth_key = process.env.CF_AUTH_KEY;
 config.slackWebhookURL = process.env.SLACK_WEBHOOK;
+config.pushcutWebhookURL = process.env.PUSHCUT_WEBHOOK;
 
 export default config;

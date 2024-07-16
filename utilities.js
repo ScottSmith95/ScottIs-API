@@ -222,11 +222,11 @@ async function postPushcutWebhook( response, timestamp ) {
 	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
 	const payload = {
 		'text': response,
-		'id': timestamp,
+		'id': `${ timestamp }`,
 		'actions': [
 			{
 				'name': 'Delete Response',
-				'input': timestamp,
+				'input': `${ timestamp }`,
 				'url': delete_url
 			}
 		]

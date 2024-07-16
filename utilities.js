@@ -207,7 +207,7 @@ async function postSlackWebhook( response, timestamp ) {
 
 		return await slackResponse.text();
 	} catch ( error ) {
-		console.error( 'Upload failed:', error );
+		console.error( 'Notification failed:', error );
 		if ( typeof response !== 'undefined' ) {
 			console.error( 'Response:', response );
 			if ( typeof response.statusCode !== 'undefined' ) {
@@ -222,14 +222,14 @@ async function postPushcutWebhook( response, timestamp ) {
 	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
 	const payload = {
 		'text': response,
+		'id': timestamp,
 		'actions': [
 			{
 				'name': 'Delete Response',
 				'input': timestamp,
-				'id': timestamp,
 				'url': delete_url
 			}
-		],
+		]
 	};
 
 	try {
@@ -246,7 +246,7 @@ async function postPushcutWebhook( response, timestamp ) {
 
 		return await pushcutResponse.text();
 	} catch ( error ) {
-		console.error( 'Upload failed:', error );
+		console.error( 'Notification failed:', error );
 		if ( typeof response !== 'undefined' ) {
 			console.error( 'Response:', response );
 			if ( typeof response.statusCode !== 'undefined' ) {

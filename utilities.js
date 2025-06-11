@@ -166,17 +166,12 @@ function domainCheck( origin ) {
 }
 
 function getBaseURL( origin ) {
-	const origin_parsed = url.parse( origin, true, true );
-	const hostname = origin_parsed.hostname;
-	const protocol = origin_parsed.protocol;
-	const baseURL  = `${ protocol }//${ hostname }`;
-
-	return baseURL;
+	const { protocol, hostname } = new URL(origin);
+	return `${protocol}//${hostname}`;
 }
 
 function getHostname( origin ) {
-	const origin_parsed = url.parse( origin, true, true );
-	return origin_parsed.hostname;
+	return new URL(origin).hostname;
 }
 
 async function postSlackWebhook( response, timestamp ) {

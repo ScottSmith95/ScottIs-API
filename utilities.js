@@ -1,6 +1,4 @@
 import config from './config.js';
-import fetch from 'node-fetch';
-import url from 'url';
 
 async function readData( reqLimit = null ) {
 	let limit = reqLimit;
@@ -38,8 +36,10 @@ async function writeToData( input, timestamp ) {
 		}
 	);
 
-	if ( apiResponse.success === true ) {
-		return await apiResponse.json();
+	const apiResponseJson = await apiResponse.json();
+
+	if ( apiResponseJson.success === true ) {
+		return apiResponseJson;
 	} return false;
 }
 

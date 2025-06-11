@@ -8,11 +8,11 @@ export default async ( req, res ) => {
 	const timestamp = utils.getTimestamp();
 	const origin = req.headers.origin;
 	const ip = req.headers[ 'x-forwarded-for' ] || req.connection.remoteAddress;
-	let baseURL;
-	if ( origin ) {
-		baseURL = utils.getBaseURL( origin );
-		// res.setHeader('Access-Control-Allow-Origin', baseURL);
-	}
+	// let baseURL;
+	// if ( origin ) {
+	// 	baseURL = utils.getBaseURL( origin );
+	// 	res.setHeader('Access-Control-Allow-Origin', baseURL);
+	// }
 
 	if (
 		utils.isNonemptyResponse( input )

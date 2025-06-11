@@ -3,6 +3,5 @@
 .env*.local
 .nova
 .vercel
-pm2.config.js
 
 node_modules/

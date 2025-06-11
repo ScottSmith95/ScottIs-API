@@ -1,12 +1,12 @@
 {
   "name": "scottsmith.is-api",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "What do people really think about you?",
   "author": "Scott Smith",
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "repository": {
     "type": "git",
@@ -16,13 +16,16 @@
     "url": "https://github.com/ScottSmith95/ScottIs-API/issues"
   },
   "scripts": {
-    "test": "eslint --ignore-path .gitignore ./"
+    "dev": "vc dev",
+    "test": "eslint ./"
   },
   "dependencies": {
     "node-fetch": "^3.3.2",
-    "semver": "^7.6.2"
+    "semver": "^7.7.2"
   },
   "devDependencies": {
-    "eslint": "^9.7.0"
+    "@eslint/js": "^9.28.0",
+    "eslint": "^9.28.0",
+    "globals": "^16.2.0"
   }
 }

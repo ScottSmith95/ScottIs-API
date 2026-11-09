@@ -1,268 +1,161 @@
 import config from './config.js';
 
-async function readData( reqLimit = null ) {
-	let limit = reqLimit;
-	if ( typeof limit === 'string' ) {
-		limit = Number( reqLimit );
+async function storageRequest( key, options = {} ) {
+	if ( !config.cf_accountid || !config.cf_kv_namespace_id
+		|| !( config.cf_api_token || ( config.cf_auth_email && config.cf_auth_key ) ) ) {
+		throw new Error( 'Storage is not configured.' );
 	}
-
-	const apiResponse = await fetch(
-		`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
+	const auth = config.cf_api_token
+		? { Authorization: `Bearer ${ config.cf_api_token }` }
+		: { 'X-Auth-Email': config.cf_auth_email, 'X-Auth-Key': config.cf_auth_key };
+	const response = await fetch(
+		`${ config.data_api_root }accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/${ key }`,
 		{
-			method: 'GET',
-			headers: {
-				'X-Auth-Email': config.cf_auth_email,
-				'X-Auth-Key': config.cf_auth_key
-			}
+			...options,
+			headers: { ...auth, 'Content-Type': 'application/json' },
+			signal: AbortSignal.timeout( 8000 )
 		}
 	);
-	return getOrderedResponses( await apiResponse.json(), limit );
+	if ( !response.ok ) throw new Error( `Storage request failed (${ response.status }).` );
+	return response.json();
 }
 
-async function writeToData( input, timestamp ) {
-	const existingData = await readData();
-	existingData[ timestamp ] = input;
+async function readData( limit = null ) {
+	const data = await storageRequest( 'responses' );
+	if ( !data || typeof data !== 'object' || Array.isArray( data )
+		|| Object.entries( data ).some( ( [ key, value ] ) => !isTimestamp( key ) || typeof value !== 'string' ) ) {
+		throw new Error( 'Invalid responses in storage.' );
+	}
+	return getOrderedResponses( data, limit );
+}
 
-	const apiResponse = await fetch(
-		`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-		{
-			method: 'PUT',
-			headers: {
-				'X-Auth-Email': config.cf_auth_email,
-				'X-Auth-Key': config.cf_auth_key,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify( existingData )
-		}
-	);
+async function saveData( data ) {
+	const result = await storageRequest( 'responses', { method: 'PUT', body: JSON.stringify( data ) } );
+	if ( result?.success !== true ) throw new Error( 'Storage did not confirm the write.' );
+	return true;
+}
 
-	const apiResponseJson = await apiResponse.json();
-
-	if ( apiResponseJson.success === true ) {
-		return apiResponseJson;
-	} return false;
+async function writeToData( input, timestamp, existingData ) {
+	const data = existingData ?? await readData();
+	// This avoids a collision in this snapshot; KV cannot make concurrent writes atomic.
+	while ( Object.hasOwn( data, timestamp ) ) timestamp += 1;
+	await saveData( { ...data, [ timestamp ]: input } );
+	return timestamp;
 }
 
 async function deleteFromData( timestamp ) {
-	const existingData = await readData();
-
-	if ( existingData[ timestamp ] ) {
-		delete existingData[ timestamp ];
-
-		const apiResponse = await fetch(
-			`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/responses`,
-			{
-				method: 'PUT',
-				headers: {
-					'X-Auth-Email': config.cf_auth_email,
-					'X-Auth-Key': config.cf_auth_key,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify( existingData )
-			}
-		);
-
-		const apiResponseJson = await apiResponse.json();
-
-		if ( apiResponseJson.success === true ) {
-			return true;
-		} return false;
-	}
-	console.error( 'Response timestamp not found.' );
-	return false;
+	const data = await readData();
+	if ( !Object.hasOwn( data, timestamp ) ) return false;
+	delete data[ timestamp ];
+	await saveData( data );
+	return true;
 }
 
-function getOrderedResponses( obj, limit ) {
-	let sort_array = Object.entries( obj );
+function getOrderedResponses( data, limit = null ) {
+	const entries = Object.entries( data ).sort( ( a, b ) => Number( a[ 0 ] ) - Number( b[ 0 ] ) );
+	return Object.fromEntries( limit === null ? entries : entries.slice( -limit ) );
+}
 
-	if ( typeof limit === 'number' ) {
-		// Sort in reverse chronological order. (Newest -> Oldest)
-		sort_array = sort_array.sort( function ( a, b ) {
-			return b[ 0 ] - a[ 0 ];
-		} );
-
-		// Get just the first (earliest) n items. (Newest[0:limit])
-		sort_array = sort_array.slice( 0, limit );
+function parseLimit( value ) {
+	if ( value === undefined ) return null;
+	if ( typeof value !== 'string' || !/^[1-9]\d*$/.test( value ) || !Number.isSafeInteger( Number( value ) ) ) {
+		throw new Error( 'Limit must be a positive integer.' );
 	}
-
-	// Sort back to chronological order. (Oldest -> Newest)
-	sort_array = sort_array.sort( function ( a, b ) {
-		return a[ 0 ] - b[ 0 ];
-	} );
-
-	// Adapted from: https://medium.com/dailyjs/rewriting-javascript-converting-an-array-of-objects-to-an-object-ec579cafbfc7
-	const arrayToObject = arr => Object.assign( {}, ...arr.map( item => ( { [ item[ 0 ] ]: item[ 1 ] } ) ) );
-
-	return arrayToObject( sort_array );
+	return Number( value );
 }
 
 function getTimestamp() {
 	return Date.now();
 }
 
+function isTimestamp( value ) {
+	return typeof value === 'string' && /^[1-9]\d{0,15}$/.test( value ) && Number.isSafeInteger( Number( value ) );
+}
+
 function isNonemptyResponse( input ) {
-	if ( typeof input === 'undefined' ) {
-		return false;
-	}
-	if ( input.length === 0 ) {
-		return false;
-	}
-	return true;
+	return typeof input === 'string' && input.trim().length > 0;
 }
 
 function isUniqueResponse( input, data ) {
-	const inputTest = input.toLowerCase();
-
-	for ( const timestamp in data ) {
-		if ( data[ timestamp ].toLowerCase() == inputTest ) {
-			console.log( 'Duplicate response entered.' );
-			return false;
-		}
-	}
-
-	return true;
+	return !Object.values( data ).some( value => value.toLowerCase() === input.toLowerCase() );
 }
 
 function sanitiseInput( input ) {
-	let inputCleaned = input;
-	inputCleaned = inputCleaned.trim();
-	inputCleaned = inputCleaned.replace( /\b[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\B|\B[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\b/g, '' ); // Remove punctuation at beginning or end of words
-	inputCleaned = inputCleaned.replace( /(<([^>]+)>)/ig, '' ); // Remove HTML tags
-
-	return inputCleaned;
-}
-
-async function readBannedIps() {
-	const bannedIps = await fetch(
-		`${config.data_api_root}accounts/${ config.cf_accountid }/storage/kv/namespaces/${ config.cf_kv_namespace_id }/values/bans`,
-		{
-			method: 'GET',
-			headers: {
-				'X-Auth-Email': config.cf_auth_email,
-				'X-Auth-Key': config.cf_auth_key,
-			}
-		}
-	);
-	return await bannedIps.json();
+	if ( typeof input !== 'string' ) return '';
+	return input.trim()
+		.replace( /\b[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\B|\B[-~=+_.,;^&*:*&$%#!?‽[\]{}()`"']+\b/g, '' )
+		.replace( /(<([^>]+)>)/ig, '' )
+		.trim();
 }
 
 async function notBannedIP( ip ) {
-	const bannedIps = await readBannedIps();
-	if ( bannedIps.includes( ip ) ) {
-		return false;
+	const bannedIps = await storageRequest( 'bans' );
+	if ( !Array.isArray( bannedIps ) || bannedIps.some( value => typeof value !== 'string' ) ) {
+		throw new Error( 'Invalid IP bans in storage.' );
 	}
+	return !bannedIps.includes( ip );
+}
 
-	return true;
+function clientIP( req ) {
+	// Vercel supplies x-forwarded-for. A different host must configure a trusted proxy.
+	const forwarded = req.headers[ 'x-forwarded-for' ];
+	return typeof forwarded === 'string' ? forwarded.split( ',' )[ 0 ].trim() : req.socket?.remoteAddress;
 }
 
 function domainCheck( origin ) {
-
-	const hostname = getHostname( origin );
-
-	if ( hostname.includes( 'scottsmith.is' ) || hostname.includes( 'now.sh' ) ) {
-		return true;
+	if ( typeof origin !== 'string' ) return false;
+	try {
+		const url = new URL( origin );
+		if ( url.origin !== origin ) return false;
+		if ( config.allowed_origins.includes( origin ) ) return true;
+		return url.protocol === 'https:' && !url.port
+			&& ( url.hostname === 'scottsmith.is' || url.hostname.endsWith( '.scottsmith.is' ) );
+	} catch {
+		return false;
 	}
-	return false;
 }
 
-function getBaseURL( origin ) {
-	const { protocol, hostname } = new URL(origin);
-	return `${protocol}//${hostname}`;
+function deletionURL( timestamp ) {
+	return new URL( `v${ config.api_version }/delete_response/${ timestamp }`, `${ config.base_url.replace( /\/+$/, '' ) }/` ).href;
 }
 
-function getHostname( origin ) {
-	return new URL(origin).hostname;
+async function postWebhook( url, payload ) {
+	const response = await fetch( url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify( payload ),
+		signal: AbortSignal.timeout( 5000 )
+	} );
+	if ( !response.ok ) throw new Error( `Webhook request failed (${ response.status }).` );
+	return response.text();
 }
 
 async function postSlackWebhook( response, timestamp ) {
-	const hook_url = config.slackWebhookURL;
-	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
-	const payload = {
-		'attachments': [
-			{
-				'fallback': response,
-				'title': response,
-				'text': `<${ delete_url }|Delete>`,
-				'color': '#167EDA'
-			}
-		]
-	};
-
-	try {
-		const slackResponse = await fetch(
-			hook_url,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify( payload )
-			}
-		);
-
-		return await slackResponse.text();
-	} catch ( error ) {
-		console.error( 'Notification failed:', error );
-		if ( typeof response !== 'undefined' ) {
-			console.error( 'Response:', response );
-			if ( typeof response.statusCode !== 'undefined' ) {
-				console.error( 'Responded with code:', response.statusCode );
-			}
-		}
-	}
+	if ( !config.slackWebhookURL ) return null;
+	const deleteURL = deletionURL( timestamp );
+	return postWebhook( config.slackWebhookURL, {
+		attachments: [ {
+			fallback: response,
+			title: response,
+			text: `<${ deleteURL }|Delete>`,
+			color: '#167EDA'
+		} ]
+	} );
 }
 
 async function postPushcutWebhook( response, timestamp ) {
-	const hook_url = config.pushcutWebhookURL;
-	const delete_url = `${ config.base_url }v${ config.api_version }/delete_response/${ timestamp }`;
-	const payload = {
-		'text': response,
-		'id': `${ timestamp }`,
-		'actions': [
-			{
-				'name': 'Delete Response',
-				'input': `${ timestamp }`,
-				'url': delete_url
-			}
-		]
-	};
-
-	try {
-		const pushcutResponse = await fetch(
-			hook_url,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify( payload )
-			}
-		);
-
-		return await pushcutResponse.text();
-	} catch ( error ) {
-		console.error( 'Notification failed:', error );
-		if ( typeof response !== 'undefined' ) {
-			console.error( 'Response:', response );
-			if ( typeof response.statusCode !== 'undefined' ) {
-				console.error( 'Responded with code:', response.statusCode );
-			}
-		}
-	}
+	if ( !config.pushcutWebhookURL ) return null;
+	const deleteURL = deletionURL( timestamp );
+	return postWebhook( config.pushcutWebhookURL, {
+		text: response,
+		id: `${ timestamp }`,
+		actions: [ { name: 'Delete Response', input: `${ timestamp }`, url: deleteURL } ]
+	} );
 }
 
 export default {
-	readData,
-	writeToData,
-	deleteFromData,
-	getOrderedResponses,
-	getTimestamp,
-	isNonemptyResponse,
-	isUniqueResponse,
-	notBannedIP,
-	sanitiseInput,
-	domainCheck,
-	getBaseURL,
-	postSlackWebhook,
-	postPushcutWebhook
+	readData, writeToData, deleteFromData, getOrderedResponses, parseLimit, getTimestamp,
+	isTimestamp, isNonemptyResponse, isUniqueResponse, notBannedIP, sanitiseInput,
+	clientIP, domainCheck, deletionURL,
+	postSlackWebhook, postPushcutWebhook
 };

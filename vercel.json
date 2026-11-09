@@ -1,34 +1,43 @@
 {
-	"routes": [
-		{
-			"methods": [
-				"GET"
-			],
-			"src": "/v1.4/responses",
-			"dest": "/api/responses_get.js",
-			"headers": {
-				"Access-Control-Allow-Origin": "*"
-			}
-		},
-		{
-			"methods": [
-				"POST"
-			],
-			"src": "/v1.4/responses",
-			"dest": "/api/responses_post.js",
-			"headers": {
-				"Access-Control-Allow-Origin": "*"
-			}
-		},
-		{
-			"src": "/v1.4/delete_response/(?<timestamp>[^/]+)",
-			"dest": "/api/delete_response.js?timestamp=$timestamp",
-			"headers": {
-				"Access-Control-Allow-Origin": "*"
-			}
-		}
-	],
-	"github": {
-		"silent": true
-	}
+  "routes": [
+    {
+      "methods": [
+        "POST"
+      ],
+      "src": "/v1.5/responses",
+      "dest": "/api/responses_post.js"
+    },
+    {
+      "src": "/v1.5/responses",
+      "dest": "/api/responses_get.js"
+    },
+    {
+      "src": "/v1.5/delete_response/(?<timestamp>[^/]+)",
+      "dest": "/api/delete_response.js?timestamp=$timestamp"
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "src": "/v1.4/responses",
+      "dest": "/api/responses_post.js"
+    },
+    {
+      "src": "/v1.4/responses",
+      "dest": "/api/responses_get.js"
+    },
+    {
+      "src": "/v1.4/delete_response/(?<timestamp>[^/]+)",
+      "dest": "/api/delete_response.js?timestamp=$timestamp"
+    }
+  ],
+  "github": {
+    "silent": true
+  },
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 60
+    }
+  },
+  "outputDirectory": "public"
 }

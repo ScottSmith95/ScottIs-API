@@ -4,12 +4,13 @@ import { defineConfig } from "eslint/config";
 
 
 export default defineConfig([
+  { ignores: [".vercel/**"] },
   { files: ["**/*.{js,mjs,cjs}"], plugins: { js }, extends: ["js/recommended"] },
   { files: ["**/*.{js,mjs,cjs}"], languageOptions: { globals: globals.node } },
   {
 	  rules: {
-		  "no-unused-vars": "warn",
-		  "no-undef": "warn",
+		  "no-unused-vars": "error",
+		  "no-undef": "error",
 	  },
   },
 ]);

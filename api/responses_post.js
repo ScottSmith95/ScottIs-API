@@ -53,11 +53,12 @@ export default async ( req, res ) => {
 
 	// Keep the user's fast response while retaining work after the function returns.
 	waitUntil( Promise.allSettled( [
+		utils.triggerFrontendBuild(),
 		utils.postSlackWebhook( input, timestamp ),
 		utils.postPushcutWebhook( input, timestamp )
 	] ).then( results => {
 		for ( const [ index, result ] of results.entries() ) {
-			if ( result.status === 'rejected' ) console.error( `${ [ 'Slack', 'Pushcut' ][ index ] } notification failed.` );
+			if ( result.status === 'rejected' ) console.error( `${ [ 'Build', 'Slack', 'Pushcut' ][ index ] } notification failed.` );
 		}
 	} ) );
 	return reply( 200, { status: 'Success. Response recorded.', response: input, timestamp }, 'sent' );

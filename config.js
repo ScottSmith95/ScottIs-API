@@ -14,6 +14,7 @@ config.cf_auth_email = process.env.CF_AUTH_EMAIL;
 config.cf_auth_key = process.env.CF_AUTH_KEY;
 config.cf_api_token = process.env.CF_API_TOKEN;
 config.allowed_origins = ( process.env.ALLOWED_ORIGINS || '' ).split( ',' ).map( origin => origin.trim() ).filter( Boolean );
+config.deployHookURL = process.env.FRONTEND_DEPLOY_HOOK;
 config.slackWebhookURL = process.env.SLACK_WEBHOOK;
 config.pushcutWebhookURL = process.env.PUSHCUT_WEBHOOK;
 

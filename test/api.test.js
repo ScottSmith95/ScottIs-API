@@ -25,7 +25,7 @@ beforeEach( () => {
 		cf_accountid: 'test-account', cf_kv_namespace_id: 'test-namespace',
 		cf_auth_email: 'test@example.com', cf_auth_key: 'test-key', cf_api_token: undefined,
 		allowed_origins: [],
-		base_url: 'https://api.scottsmith.is/', slackWebhookURL: undefined, pushcutWebhookURL: undefined
+		base_url: 'https://api.scottsmith.is/', deployHookURL: undefined, slackWebhookURL: undefined, pushcutWebhookURL: undefined
 	} );
 	calls = [];
 	pending = [];
@@ -360,4 +360,27 @@ test( 'JSON and wildcard clients retain the API contract even for URL-encoded bo
 	const jsonBody = await submit( { response: 'nice' }, { headers: { ...formHeaders, 'content-type': 'application/json' } } );
 	assert.equal( jsonBody.statusCode, 202 );
 	assert.equal( jsonBody.headers.location, undefined );
+} );
+
+
+test( 'rebuild is triggered only after successful writes and deletes', async () => {
+	config.deployHookURL = 'https://hooks.example.com/deploy';
+	assert.equal( ( await submit( { response: 'nice' } ) ).statusCode, 202 );
+	assert.equal( calls.filter( call => call.url === config.deployHookURL ).length, 0 );
+	assert.equal( ( await submit( { response: 'new value' } ) ).statusCode, 200 );
+	await Promise.all( pending );
+	assert.equal( calls.filter( call => call.url === config.deployHookURL && call.method === 'POST' ).length, 1 );
+	assert.equal( ( await invoke( deleteResponse, { method: 'POST', query: { timestamp: '1700000000000' } } ) ).statusCode, 200 );
+	await Promise.all( pending );
+	assert.equal( calls.filter( call => call.url === config.deployHookURL ).length, 2 );
+	assert.equal( ( await invoke( deleteResponse, { method: 'POST', query: { timestamp: '1700000000000' } } ) ).statusCode, 404 );
+	assert.equal( calls.filter( call => call.url === config.deployHookURL ).length, 2 );
+} );
+
+test( 'rebuild failure does not undo a successful submission or deletion', async () => {
+	config.deployHookURL = 'https://hooks.example.com/deploy';
+	webhookStatus = 500;
+	assert.equal( ( await submit( { response: 'new value' } ) ).statusCode, 200 );
+	assert.equal( ( await invoke( deleteResponse, { method: 'POST', query: { timestamp: '1700000000000' } } ) ).statusCode, 200 );
+	await Promise.all( pending );
 } );

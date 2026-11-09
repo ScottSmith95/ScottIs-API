@@ -1,3 +1,4 @@
+import { waitUntil } from '@vercel/functions';
 import utils from '../utilities.js';
 import { prepareResponse, methodNotAllowed, storageFailure } from '../http.js';
 
@@ -21,6 +22,7 @@ export default async ( req, res ) => {
 
 	try {
 		const deleted = await utils.deleteFromData( timestamp );
+		if ( deleted ) waitUntil( utils.triggerFrontendBuild() );
 		return res.status( deleted ? 200 : 404 ).json( { status: deleted ? 'Success. Response deleted.' : 'Response not found.' } );
 	} catch ( error ) {
 		return storageFailure( res, error );

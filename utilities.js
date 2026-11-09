@@ -130,6 +130,16 @@ async function postWebhook( url, payload ) {
 	return response.text();
 }
 
+async function triggerFrontendBuild() {
+	if ( !config.deployHookURL ) return;
+	try {
+		const response = await fetch( config.deployHookURL, { method: 'POST', signal: AbortSignal.timeout( 5000 ) } );
+		if ( !response.ok ) throw new Error();
+	} catch {
+		console.error( 'Frontend rebuild trigger failed.' );
+	}
+}
+
 async function postSlackWebhook( response, timestamp ) {
 	if ( !config.slackWebhookURL ) return null;
 	const deleteURL = deletionURL( timestamp );
@@ -157,5 +167,5 @@ export default {
 	readData, writeToData, deleteFromData, getOrderedResponses, parseLimit, getTimestamp,
 	isTimestamp, isNonemptyResponse, isUniqueResponse, notBannedIP, sanitiseInput,
 	clientIP, domainCheck, deletionURL,
-	postSlackWebhook, postPushcutWebhook
+	postSlackWebhook, postPushcutWebhook, triggerFrontendBuild
 };
